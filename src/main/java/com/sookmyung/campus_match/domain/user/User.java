@@ -131,4 +131,13 @@ public class User extends BaseEntity {
         if (department != null) this.department = department;
         if (sookmyungEmail != null) this.sookmyungEmail = sookmyungEmail;
     }
+
+    /**
+     * 프로필 조회 (간단한 구현)
+     * TODO: 실제로는 Profile 엔티티와의 연관관계를 설정해야 함
+     */
+    public Profile getProfile() {
+        // 임시 구현 - 실제로는 Profile 엔티티와의 연관관계를 설정해야 함
+        return null;
+    }
 }

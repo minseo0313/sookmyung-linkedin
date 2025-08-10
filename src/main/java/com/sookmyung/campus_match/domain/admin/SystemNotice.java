@@ -5,9 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * 시스템 공지 엔티티
@@ -16,6 +14,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "system_notices")
 public class SystemNotice extends BaseEntity {

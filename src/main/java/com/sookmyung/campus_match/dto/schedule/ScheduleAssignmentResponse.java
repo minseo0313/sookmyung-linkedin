@@ -1,5 +1,6 @@
 package com.sookmyung.campus_match.dto.schedule;
 
+import com.sookmyung.campus_match.domain.team.ScheduleAssignment;
 import com.sookmyung.campus_match.domain.team.enum_.AssignmentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -44,4 +45,19 @@ public class ScheduleAssignmentResponse {
 
     @Schema(description = "수정일시", example = "2025-08-11T09:15:00")
     private LocalDateTime updatedAt;
+
+    public static ScheduleAssignmentResponse from(ScheduleAssignment assignment) {
+        return ScheduleAssignmentResponse.builder()
+                .id(assignment.getId())
+                .assigneeId(assignment.getAssignee() != null ? assignment.getAssignee().getId() : null)
+                .assigneeName(assignment.getAssignee() != null ? assignment.getAssignee().getFullName() : null)
+                .title(assignment.getTitle())
+                .description("") // TODO: 실제 description 값 설정
+                .status(assignment.getStatus())
+                .dueAt(null) // TODO: 실제 dueAt 값 설정
+                .progressPct(0) // TODO: 실제 progressPct 값 설정
+                .createdAt(assignment.getCreatedAt())
+                .updatedAt(assignment.getUpdatedAt())
+                .build();
+    }
 }

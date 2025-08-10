@@ -1,4 +1,248 @@
 package com.sookmyung.campus_match.service.recommendation;
 
+import com.sookmyung.campus_match.domain.recommendation.UserEmbedding;
+import com.sookmyung.campus_match.domain.recommendation.UserRecommendation;
+import com.sookmyung.campus_match.domain.user.User;
+import com.sookmyung.campus_match.domain.user.UserInterest;
+import com.sookmyung.campus_match.domain.post.Post;
+import com.sookmyung.campus_match.repository.recommendation.UserEmbeddingRepository;
+import com.sookmyung.campus_match.repository.recommendation.UserRecommendationRepository;
+import com.sookmyung.campus_match.repository.user.UserInterestRepository;
+import com.sookmyung.campus_match.repository.user.UserRepository;
+import com.sookmyung.campus_match.repository.post.PostRepository;
+import com.sookmyung.campus_match.domain.user.enum_.ApprovalStatus;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RecommendationService {
+
+    private final UserRepository userRepository;
+    private final UserInterestRepository userInterestRepository;
+    private final PostRepository postRepository;
+    private final UserEmbeddingRepository userEmbeddingRepository;
+    private final UserRecommendationRepository userRecommendationRepository;
+
+    /**
+     * 사용자에게 추천할 다른 사용자 목록을 생성
+     * - 관심사, 자기소개, 작성한 글을 기반으로 유사도 분석
+     */
+    @Transactional
+    public List<UserRecommendation> generateRecommendationsForUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        // 승인된 사용자만 추천 대상
+        List<User> approvedUsers = userRepository.findByApprovalStatus(ApprovalStatus.APPROVED);
+        approvedUsers.remove(user); // 본인 제외
+
+        List<UserRecommendation> recommendations = new ArrayList<>();
+
+        for (User candidate : approvedUsers) {
+            double similarityScore = calculateSimilarity(user, candidate);
+            
+            if (similarityScore > 0.1) { // 최소 유사도 임계값
+                UserRecommendation recommendation = UserRecommendation.builder()
+                        .user(user)
+                        .recommendedUser(candidate)
+                        .similarityScore(similarityScore)
+                        .build();
+                
+                recommendations.add(recommendation);
+            }
+        }
+
+        // 유사도 점수 순으로 정렬
+        recommendations.sort((a, b) -> Double.compare(b.getSimilarityScore(), a.getSimilarityScore()));
+
+        // 상위 20개만 저장
+        List<UserRecommendation> topRecommendations = recommendations.stream()
+                .limit(20)
+                .collect(Collectors.toList());
+
+        // 기존 추천 기록 삭제 후 새로운 추천 저장
+        userRecommendationRepository.deleteByUserId(userId);
+        userRecommendationRepository.saveAll(topRecommendations);
+
+        return topRecommendations;
+    }
+
+    /**
+     * 두 사용자 간의 유사도 계산
+     * - 관심사 일치: 40%
+     * - 학과 일치: 30%
+     * - 게시글 카테고리 일치: 20%
+     * - 자기소개 키워드 일치: 10%
+     */
+    private double calculateSimilarity(User user1, User user2) {
+        double totalScore = 0.0;
+
+        // 1. 관심사 일치도 (40%)
+        double interestSimilarity = calculateInterestSimilarity(user1, user2);
+        totalScore += interestSimilarity * 0.4;
+
+        // 2. 학과 일치도 (30%)
+        double departmentSimilarity = calculateDepartmentSimilarity(user1, user2);
+        totalScore += departmentSimilarity * 0.3;
+
+        // 3. 게시글 카테고리 일치도 (20%)
+        double postSimilarity = calculatePostSimilarity(user1, user2);
+        totalScore += postSimilarity * 0.2;
+
+        // 4. 자기소개 키워드 일치도 (10%)
+        double bioSimilarity = calculateBioSimilarity(user1, user2);
+        totalScore += bioSimilarity * 0.1;
+
+        return Math.min(1.0, totalScore);
+    }
+
+    /**
+     * 관심사 일치도 계산
+     */
+    private double calculateInterestSimilarity(User user1, User user2) {
+        List<UserInterest> interests1 = userInterestRepository.findByUser(user1);
+        List<UserInterest> interests2 = userInterestRepository.findByUser(user2);
+
+        if (interests1.isEmpty() && interests2.isEmpty()) {
+            return 0.5; // 둘 다 관심사가 없으면 중간 점수
+        }
+
+        Set<Long> interestIds1 = interests1.stream()
+                .map(interest -> interest.getInterest().getId())
+                .collect(Collectors.toSet());
+        
+        Set<Long> interestIds2 = interests2.stream()
+                .map(interest -> interest.getInterest().getId())
+                .collect(Collectors.toSet());
+
+        if (interestIds1.isEmpty() || interestIds2.isEmpty()) {
+            return 0.0;
+        }
+
+        // Jaccard 유사도 계산
+        Set<Long> intersection = new HashSet<>(interestIds1);
+        intersection.retainAll(interestIds2);
+
+        Set<Long> union = new HashSet<>(interestIds1);
+        union.addAll(interestIds2);
+
+        return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
+    }
+
+    /**
+     * 학과 일치도 계산
+     */
+    private double calculateDepartmentSimilarity(User user1, User user2) {
+        return user1.getDepartment().equals(user2.getDepartment()) ? 1.0 : 0.0;
+    }
+
+    /**
+     * 게시글 카테고리 일치도 계산
+     */
+    private double calculatePostSimilarity(User user1, User user2) {
+        List<Post> posts1 = postRepository.findByAuthor_Id(user1.getId(), null).getContent();
+        List<Post> posts2 = postRepository.findByAuthor_Id(user2.getId(), null).getContent();
+
+        if (posts1.isEmpty() && posts2.isEmpty()) {
+            return 0.5; // 둘 다 게시글이 없으면 중간 점수
+        }
+
+        Set<Long> categoryIds1 = posts1.stream()
+                .map(post -> post.getCategory().getId())
+                .collect(Collectors.toSet());
+        
+        Set<Long> categoryIds2 = posts2.stream()
+                .map(post -> post.getCategory().getId())
+                .collect(Collectors.toSet());
+
+        if (categoryIds1.isEmpty() || categoryIds2.isEmpty()) {
+            return 0.0;
+        }
+
+        // Jaccard 유사도 계산
+        Set<Long> intersection = new HashSet<>(categoryIds1);
+        intersection.retainAll(categoryIds2);
+
+        Set<Long> union = new HashSet<>(categoryIds1);
+        union.addAll(categoryIds2);
+
+        return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
+    }
+
+    /**
+     * 자기소개 키워드 일치도 계산
+     */
+    private double calculateBioSimilarity(User user1, User user2) {
+        // 간단한 키워드 매칭 (실제로는 더 정교한 NLP 처리 필요)
+        String bio1 = user1.getProfile() != null ? user1.getProfile().getBio() : "";
+        String bio2 = user2.getProfile() != null ? user2.getProfile().getBio() : "";
+
+        if (bio1.isEmpty() && bio2.isEmpty()) {
+            return 0.5;
+        }
+
+        // 공통 키워드 찾기 (간단한 구현)
+        Set<String> keywords1 = extractKeywords(bio1);
+        Set<String> keywords2 = extractKeywords(bio2);
+
+        if (keywords1.isEmpty() || keywords2.isEmpty()) {
+            return 0.0;
+        }
+
+        Set<String> intersection = new HashSet<>(keywords1);
+        intersection.retainAll(keywords2);
+
+        Set<String> union = new HashSet<>(keywords1);
+        union.addAll(keywords2);
+
+        return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
+    }
+
+    /**
+     * 텍스트에서 키워드 추출 (간단한 구현)
+     */
+    private Set<String> extractKeywords(String text) {
+        if (text == null || text.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        // 간단한 키워드 추출 (실제로는 더 정교한 NLP 처리 필요)
+        return Arrays.stream(text.toLowerCase()
+                .replaceAll("[^a-zA-Z가-힣\\s]", " ")
+                .split("\\s+"))
+                .filter(word -> word.length() > 1)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 사용자의 추천 목록 조회
+     */
+    public List<UserRecommendation> getRecommendationsForUser(Long userId) {
+        return userRecommendationRepository.findByUserId(userId);
+    }
+
+    /**
+     * 모든 사용자의 추천 목록 재생성 (배치 작업용)
+     */
+    @Transactional
+    public void regenerateAllRecommendations() {
+        List<User> approvedUsers = userRepository.findByApprovalStatus(ApprovalStatus.APPROVED);
+        
+        for (User user : approvedUsers) {
+            try {
+                generateRecommendationsForUser(user.getId());
+                log.info("Generated recommendations for user: {}", user.getUsername());
+            } catch (Exception e) {
+                log.error("Failed to generate recommendations for user: {}", user.getUsername(), e);
+            }
+        }
+    }
 }

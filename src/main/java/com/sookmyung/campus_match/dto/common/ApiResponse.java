@@ -39,7 +39,7 @@ public class ApiResponse<T> {
 
     // --- Factory methods (성공) ---
 
-    public static <T> ApiResponse<T> ok(T data) {
+    public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
                 .success(true)
                 .code("OK")
@@ -47,6 +47,10 @@ public class ApiResponse<T> {
                 .data(data)
                 .timestamp(nowIso())
                 .build();
+    }
+
+    public static <T> ApiResponse<T> ok(T data) {
+        return success(data);
     }
 
     public static <T> ApiResponse<T> okMessage(String message) {

@@ -30,6 +30,9 @@ public interface ScheduleAssignmentRepository extends JpaRepository<ScheduleAssi
     // 일정별 개수 / 일괄 삭제
     long countBySchedule_Id(Long scheduleId);
     void deleteBySchedule_Id(Long scheduleId);
+    
+    // 팀으로 업무 조회 (서비스에서 사용)
+    List<ScheduleAssignment> findByTeam(com.sookmyung.campus_match.domain.team.Team team);
 
     // Overdue(마감 지남 + 완료 아님) — 팀 단위 조회
     @Query("""

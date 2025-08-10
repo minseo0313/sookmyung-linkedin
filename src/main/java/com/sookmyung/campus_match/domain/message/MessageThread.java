@@ -135,4 +135,18 @@ public class MessageThread extends BaseEntity {
     public boolean isParticipantB(Long userId) {
         return userId != null && participantB != null && participantB.getId().equals(userId);
     }
+
+    /**
+     * 참가자 A ID 조회
+     */
+    public Long getParticipantAId() {
+        return participantA != null ? participantA.getId() : null;
+    }
+
+    /**
+     * 참가자 B ID 조회
+     */
+    public Long getParticipantBId() {
+        return participantB != null ? participantB.getId() : null;
+    }
 }

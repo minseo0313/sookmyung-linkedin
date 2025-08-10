@@ -1,5 +1,6 @@
 package com.sookmyung.campus_match.dto.team;
 
+import com.sookmyung.campus_match.domain.team.Team;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -33,4 +34,15 @@ public class TeamResponse {
 
     @Schema(description = "팀원 목록")
     private List<TeamMemberResponse> members;
+
+    public static TeamResponse from(Team team) {
+        return TeamResponse.builder()
+                .id(team.getId())
+                .name(team.getName())
+                .startDate(null) // TODO: 실제 시작일 설정
+                .endDate(null) // TODO: 실제 종료일 설정
+                .leaderId(null) // TODO: 실제 팀장 ID 설정
+                .members(List.of()) // TODO: 실제 팀원 목록을 가져와서 설정
+                .build();
+    }
 }

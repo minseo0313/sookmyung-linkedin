@@ -1,7 +1,7 @@
 package com.sookmyung.campus_match.dto.profile;
 
-import com.sookmyung.campus_match.domain.profile.Experience;
-import com.sookmyung.campus_match.domain.profile.Profile;
+import com.sookmyung.campus_match.domain.user.Experience;
+import com.sookmyung.campus_match.domain.user.Profile;
 import com.sookmyung.campus_match.domain.user.enum_.ExperienceType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;

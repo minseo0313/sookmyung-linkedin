@@ -22,6 +22,12 @@ public interface PostApplicationRepository extends JpaRepository<PostApplication
     // 유저 + 게시글로 단건 조회 (중복 지원 방지)
     Optional<PostApplication> findByUserAndPost(User user, Post post);
     boolean existsByUserAndPost(User user, Post post);
+    
+    // Post + Applicant ID로 조회
+    Optional<PostApplication> findByPostAndApplicantId(Post post, Long applicantId);
+    
+    // Post + Applicant로 조회 (서비스에서 사용)
+    boolean existsByPostAndApplicant(Post post, User applicant);
 
     // 상태별 조회
     List<PostApplication> findByPostIdAndStatus(Long postId, ApplicationStatus status);

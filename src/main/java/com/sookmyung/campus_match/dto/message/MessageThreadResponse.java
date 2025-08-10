@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * 메시지 스레드 응답 DTO.
@@ -53,7 +54,8 @@ public class MessageThreadResponse {
                 .participantBId(thread.getParticipantBId())
                 .startedFromType(thread.getStartedFromType())
                 .startedFromId(thread.getStartedFromId())
-                .lastMessageAt(thread.getLastMessageAt())
+                .lastMessageAt(thread.getLastMessageAt() != null ? 
+                        LocalDateTime.ofInstant(thread.getLastMessageAt(), ZoneId.systemDefault()) : null)
                 .lastMessagePreview(thread.getLastMessagePreview())
                 .unreadCountA(thread.getUnreadCountA())
                 .unreadCountB(thread.getUnreadCountB())

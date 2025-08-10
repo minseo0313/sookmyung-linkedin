@@ -21,6 +21,9 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
     // 유저가 특정 게시글에 좋아요 눌렀는지 여부
     boolean existsByUserAndPost(User user, Post post);
     boolean existsByUserIdAndPostId(Long userId, Long postId);
+    
+    // Post + User로 조회 (서비스에서 사용)
+    boolean existsByPostAndUser(Post post, User user);
 
     // 좋아요 단건 삭제 (유저가 누른 좋아요 취소)
     void deleteByUserAndPost(User user, Post post);

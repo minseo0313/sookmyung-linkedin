@@ -1,6 +1,6 @@
 package com.sookmyung.campus_match.dto.message;
 
-import com.sookmyung.campus_match.domain.message.enum.ReportStatus;
+import com.sookmyung.campus_match.domain.message.enum_.ReportStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 

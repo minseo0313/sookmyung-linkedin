@@ -24,6 +24,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             String titleKeyword, String contentKeyword, Pageable pageable
     );
 
+    // 제목 검색
+    Page<Post> findByTitleContainingIgnoreCase(String keyword, Pageable pageable);
+
     // 최신 상위 N (메인 노출용)
     List<Post> findTop10ByClosedFalseOrderByCreatedAtDesc();
     List<Post> findTop10ByCategory_IdAndClosedFalseOrderByCreatedAtDesc(Long categoryId);

@@ -76,4 +76,11 @@ public class Profile extends BaseEntity {
     public void setGreetingEnabled(boolean enabled) {
         this.greetingEnabled = enabled;
     }
+
+    /**
+     * 사용자 ID 조회
+     */
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
+    }
 }
