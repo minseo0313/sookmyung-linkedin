@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: campus-match
+  profiles:
+    active: dev    # 로컬이 항상 dev로 뜨게 하려면 넣기(선택)
+
+  flyway:
+    enabled: false # Flyway 사용 안 할 경우 비활성화

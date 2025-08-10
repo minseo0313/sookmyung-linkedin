@@ -1,0 +1,20 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: campus-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_DATABASE: campus
+      MYSQL_USER: campus
+      MYSQL_PASSWORD: campuspw
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"   # 이미 사용 중이면 "13306:3306"
+    command: [
+      "--character-set-server=utf8mb4",
+      "--collation-server=utf8mb4_unicode_ci",
+      "--default-time-zone=+09:00"
+    ]
+    volumes:
+      - ./mysql-data:/var/lib/mysql
