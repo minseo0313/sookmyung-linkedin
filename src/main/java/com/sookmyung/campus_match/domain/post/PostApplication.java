@@ -89,4 +89,18 @@ public class PostApplication extends BaseEntity {
     public boolean isPending() {
         return this.status == ApplicationStatus.PENDING;
     }
+
+    /**
+     * 게시글 ID 조회
+     */
+    public Long getPostId() {
+        return post != null ? post.getId() : null;
+    }
+
+    /**
+     * 신청자 ID 조회
+     */
+    public Long getApplicantId() {
+        return applicant != null ? applicant.getId() : null;
+    }
 }

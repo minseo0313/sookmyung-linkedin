@@ -25,6 +25,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // === 상태/목록 ===
     List<User> findByApprovalStatus(ApprovalStatus status);
+    long countByApprovalStatus(ApprovalStatus status);
 
     // === 간단 검색 (이름/아이디 부분 일치 + 페이징) ===
     Page<User> findByFullNameContainingIgnoreCaseOrUsernameContainingIgnoreCase(

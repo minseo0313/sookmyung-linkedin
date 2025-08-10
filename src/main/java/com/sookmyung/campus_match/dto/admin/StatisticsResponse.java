@@ -29,4 +29,13 @@ public class StatisticsResponse {
 
     @Schema(description = "신고된 메시지 수", example = "7")
     private long reportedMessagesCount;
+
+    @Schema(description = "승인된 사용자 수", example = "300")
+    private long approvedUsers;
+
+    @Schema(description = "대기 중인 사용자 수", example = "52")
+    private long pendingUsers;
+
+    @Schema(description = "일일 방문자 수", example = "150")
+    private long dailyVisitors;
 }

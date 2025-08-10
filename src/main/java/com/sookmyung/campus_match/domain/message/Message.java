@@ -77,4 +77,18 @@ public class Message extends BaseEntity {
         // 필요 시 마스킹:
         // this.content = "[삭제된 메시지입니다]";
     }
+
+    /**
+     * 스레드 ID 조회
+     */
+    public Long getThreadId() {
+        return thread != null ? thread.getId() : null;
+    }
+
+    /**
+     * 발신자 ID 조회
+     */
+    public Long getSenderId() {
+        return sender != null ? sender.getId() : null;
+    }
 }

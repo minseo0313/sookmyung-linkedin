@@ -46,4 +46,7 @@ public interface TeamScheduleRepository extends JpaRepository<TeamSchedule, Long
     // 팀별 일정 개수/일괄 삭제
     long countByTeam_Id(Long teamId);
     void deleteByTeam_Id(Long teamId);
+    
+    // 팀으로 일정 조회 (서비스에서 사용)
+    List<TeamSchedule> findByTeam(com.sookmyung.campus_match.domain.team.Team team);
 }

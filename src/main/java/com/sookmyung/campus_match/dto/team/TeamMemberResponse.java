@@ -1,5 +1,6 @@
 package com.sookmyung.campus_match.dto.team;
 
+import com.sookmyung.campus_match.domain.team.TeamMember;
 import com.sookmyung.campus_match.domain.team.enum_.MemberRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -24,4 +25,13 @@ public class TeamMemberResponse {
 
     @Schema(description = "팀원 역할", example = "MEMBER")
     private MemberRole role;
+
+    public static TeamMemberResponse from(TeamMember member) {
+        return TeamMemberResponse.builder()
+                .userId(member.getUser() != null ? member.getUser().getId() : null)
+                .fullName(member.getUser() != null ? member.getUser().getFullName() : null)
+                .department(member.getUser() != null ? member.getUser().getDepartment() : null)
+                .role(member.getRole())
+                .build();
+    }
 }

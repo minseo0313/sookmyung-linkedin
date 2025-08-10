@@ -28,6 +28,7 @@ public class ProfileCreateRequest {
     private String bio;
 
     @Schema(description = "인사 기능 활성화 여부", example = "true")
+    @Builder.Default
     private boolean greetingEnabled = true;
 
     @Schema(description = "관심사 ID 목록", example = "[1, 3, 5]")

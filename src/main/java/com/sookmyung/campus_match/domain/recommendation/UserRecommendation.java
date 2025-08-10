@@ -3,9 +3,7 @@ package com.sookmyung.campus_match.domain.recommendation;
 import com.sookmyung.campus_match.domain.common.BaseEntity;
 import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * 사용자 추천 매핑 엔티티
@@ -15,6 +13,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "user_recommendations")
 public class UserRecommendation extends BaseEntity {

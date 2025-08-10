@@ -1,5 +1,6 @@
 package com.sookmyung.campus_match.dto.schedule;
 
+import com.sookmyung.campus_match.domain.team.TeamSchedule;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -38,4 +39,17 @@ public class TeamScheduleResponse {
 
     @Schema(description = "업무 목록")
     private List<ScheduleAssignmentResponse> assignments;
+
+    public static TeamScheduleResponse from(TeamSchedule schedule) {
+        return TeamScheduleResponse.builder()
+                .id(schedule.getId())
+                .title(schedule.getTitle())
+                .description(schedule.getDescription())
+                .startAt(schedule.getStartAt())
+                .endAt(schedule.getEndAt())
+                .allDay(schedule.isAllDay())
+                .location(schedule.getLocation())
+                .assignments(List.of()) // TODO: 실제 assignments 목록 설정
+                .build();
+    }
 }

@@ -1,8 +1,10 @@
 package com.sookmyung.campus_match.dto.admin;
 
+import com.sookmyung.campus_match.domain.admin.SystemNotice;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 /**
@@ -31,4 +33,17 @@ public class SystemNoticeResponse {
 
     @Schema(description = "공지 수정일", example = "2025-08-10T16:00:00")
     private LocalDateTime updatedAt;
+
+    public static SystemNoticeResponse from(SystemNotice notice) {
+        return SystemNoticeResponse.builder()
+                .id(notice.getId())
+                .title(notice.getTitle())
+                .content(notice.getContent())
+                .active(notice.isActive())
+                .createdAt(notice.getCreatedAt() != null ? 
+                        LocalDateTime.ofInstant(Instant.from(notice.getCreatedAt()), java.time.ZoneId.systemDefault()) : null)
+                .updatedAt(notice.getUpdatedAt() != null ? 
+                        LocalDateTime.ofInstant(Instant.from(notice.getUpdatedAt()), java.time.ZoneId.systemDefault()) : null)
+                .build();
+    }
 }

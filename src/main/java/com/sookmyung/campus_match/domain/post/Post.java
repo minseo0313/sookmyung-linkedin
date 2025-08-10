@@ -165,4 +165,18 @@ public class Post extends BaseEntity {
     public void addRequiredRole(String role) {
         if (role != null && !role.isBlank()) requiredRoles.add(role);
     }
+
+    /**
+     * 카테고리 ID 조회
+     */
+    public Long getCategoryId() {
+        return category != null ? category.getId() : null;
+    }
+
+    /**
+     * 작성자 ID 조회
+     */
+    public Long getAuthorId() {
+        return author != null ? author.getId() : null;
+    }
 }

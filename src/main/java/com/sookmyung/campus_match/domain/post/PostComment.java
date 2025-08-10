@@ -76,4 +76,18 @@ public class PostComment extends BaseEntity {
         // 필요 시 content 마스킹 로직 추가 가능
         // this.content = "[삭제된 댓글입니다]";
     }
+
+    /**
+     * 게시글 ID 조회
+     */
+    public Long getPostId() {
+        return post != null ? post.getId() : null;
+    }
+
+    /**
+     * 작성자 ID 조회
+     */
+    public Long getAuthorId() {
+        return author != null ? author.getId() : null;
+    }
 }
