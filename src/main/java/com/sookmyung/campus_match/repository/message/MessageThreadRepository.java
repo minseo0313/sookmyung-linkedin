@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface MessageThreadRepository extends JpaRepository<MessageThread, Long> {
@@ -49,4 +50,23 @@ public interface MessageThreadRepository extends JpaRepository<MessageThread, Lo
 
     // 내가 참여 중인 스레드 수
     long countByParticipantA_IdOrParticipantB_Id(Long userIdA, Long userIdB);
+
+    // 두 사용자 간 스레드 단건 조회 (MessageService에서 사용)
+    @Query("""
+           select t
+             from MessageThread t
+            where (t.participantA.id = :userId1 and t.participantB.id = :userId2)
+               or (t.participantA.id = :userId2 and t.participantB.id = :userId1)
+           """)
+    Optional<MessageThread> findByParticipants(Long userId1, Long userId2);
+
+    // 특정 사용자가 참여 중인 스레드 목록 (MessageService에서 사용)
+    @Query("""
+           select t
+             from MessageThread t
+            where t.participantA.id = :userId
+               or t.participantB.id = :userId
+            order by t.lastMessageAt desc, t.id desc
+           """)
+    List<MessageThread> findByParticipant(Long userId);
 }

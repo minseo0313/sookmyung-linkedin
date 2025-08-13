@@ -1,11 +1,13 @@
 package com.sookmyung.campus_match.repository.team;
 
 import com.sookmyung.campus_match.domain.team.ScheduleAssignment;
+import com.sookmyung.campus_match.domain.team.Team;
 import com.sookmyung.campus_match.domain.team.enum_.AssignmentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,8 +33,17 @@ public interface ScheduleAssignmentRepository extends JpaRepository<ScheduleAssi
     long countBySchedule_Id(Long scheduleId);
     void deleteBySchedule_Id(Long scheduleId);
     
-    // 팀으로 업무 조회 (서비스에서 사용)
-    List<ScheduleAssignment> findByTeam(com.sookmyung.campus_match.domain.team.Team team);
+    // 팀으로 업무 조회 (JPA 메서드 네이밍 규칙)
+    List<ScheduleAssignment> findBySchedule_Team(Team team);
+    
+    // 팀 ID로 업무 조회 (JPQL 사용)
+    @Query("""
+           select sa
+             from ScheduleAssignment sa
+            where sa.schedule.team.id = :teamId
+            order by sa.schedule.startAt asc, sa.createdAt asc
+           """)
+    List<ScheduleAssignment> findByTeamId(@Param("teamId") Long teamId);
 
     // Overdue(마감 지남 + 완료 아님) — 팀 단위 조회
     @Query("""
@@ -44,5 +55,7 @@ public interface ScheduleAssignmentRepository extends JpaRepository<ScheduleAssi
               and a.status <> :doneStatus
             order by a.dueAt asc
            """)
-    List<ScheduleAssignment> findOverdueByTeam(Long teamId, LocalDateTime now, AssignmentStatus doneStatus);
+    List<ScheduleAssignment> findOverdueByTeam(@Param("teamId") Long teamId, 
+                                               @Param("now") LocalDateTime now, 
+                                               @Param("assignmentStatus") AssignmentStatus doneStatus);
 }

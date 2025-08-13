@@ -2,6 +2,7 @@ package com.sookmyung.campus_match.domain.team;
 
 import com.sookmyung.campus_match.domain.common.BaseEntity;
 import com.sookmyung.campus_match.domain.post.Post;
+import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,6 +36,12 @@ public class Team extends BaseEntity {
     /** 팀 설명(선택) */
     @Column(length = 500)
     private String description;
+
+    /** 팀 생성자 */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "created_by", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_teams_creator"))
+    private User createdBy;
 
     /** 연락처 공개 여부 (매칭 성사 시 운영진·팀원간 공유) */
     @Column(nullable = false)
@@ -90,5 +97,19 @@ public class Team extends BaseEntity {
             schedules.remove(schedule);
             schedule.setTeam(null);
         }
+    }
+
+    /**
+     * 팀 생성자 설정
+     */
+    public void setCreatedBy(User createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    /**
+     * 팀 생성자 ID 조회
+     */
+    public Long getCreatedById() {
+        return createdBy != null ? createdBy.getId() : null;
     }
 }

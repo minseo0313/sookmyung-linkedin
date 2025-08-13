@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -72,5 +74,25 @@ public class ProfileService {
 
         // TODO: 실제 관심사와 경력 데이터를 가져와서 전달해야 함
         return ProfileResponse.from(profile, List.of(), List.of());
+    }
+
+    /**
+     * 프로필 조회수 증가
+     */
+    @Transactional
+    public void incrementViewCount(Long profileId) {
+        Profile profile = profileRepository.findById(profileId)
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "프로필을 찾을 수 없습니다."));
+        
+        profile.incrementViewCount();
+        profileRepository.save(profile);
+    }
+
+    /**
+     * 사용자 ID로 프로필 조회수 증가 (Repository 직접 호출)
+     */
+    @Transactional
+    public void incrementViewCountByUserId(Long userId) {
+        profileRepository.incrementViewCount(userId);
     }
 }

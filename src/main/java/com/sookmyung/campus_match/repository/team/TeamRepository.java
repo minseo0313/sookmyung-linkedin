@@ -3,6 +3,8 @@ package com.sookmyung.campus_match.repository.team;
 import com.sookmyung.campus_match.domain.team.Team;
 import com.sookmyung.campus_match.domain.team.TeamMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,11 +14,15 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     // 팀명으로 검색
     List<Team> findByNameContainingIgnoreCase(String keyword);
 
-    // 특정 생성자의 팀 목록
-    List<Team> findByCreatedBy_Id(Long creatorId);
+    // 특정 생성자의 팀 목록 (JPA 메서드 네이밍 규칙)
+    List<Team> findByCreatedBy_Id(@Param("creatorId") Long creatorId);
+
+    // 특정 생성자의 팀 목록 (JPQL 대안)
+    @Query("select t from Team t where t.createdBy.id = :creatorId")
+    List<Team> findByCreatorId(@Param("creatorId") Long creatorId);
 
     // 특정 멤버가 속한 팀 목록 (TeamMember 엔티티 조인 없이)
-    List<Team> findByMembers_User_Id(Long userId);
+    List<Team> findByMembers_User_Id(@Param("userId") Long userId);
 
     // 팀명 중복 여부
     boolean existsByNameIgnoreCase(String name);

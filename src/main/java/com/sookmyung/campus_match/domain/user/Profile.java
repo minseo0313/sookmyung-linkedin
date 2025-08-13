@@ -43,6 +43,11 @@ public class Profile extends BaseEntity {
     @Builder.Default
     private boolean greetingEnabled = true;
 
+    /** 프로필 조회수 */
+    @Column(nullable = false)
+    @Builder.Default
+    private int viewCount = 0;
+
     /** 경력/활동 목록 (프로필 소유, 삭제 시 함께 제거) */
     @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -82,5 +87,28 @@ public class Profile extends BaseEntity {
      */
     public Long getUserId() {
         return user != null ? user.getId() : null;
+    }
+
+    /**
+     * 프로필 정보 업데이트 (ProfileService에서 사용)
+     */
+    public void update(String headline, String bio, boolean greetingEnabled) {
+        if (headline != null) this.headline = headline;
+        if (bio != null) this.bio = bio;
+        this.greetingEnabled = greetingEnabled;
+    }
+
+    /**
+     * 조회수 증가
+     */
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    /**
+     * 조회수 조회
+     */
+    public int getViewCount() {
+        return this.viewCount;
     }
 }
