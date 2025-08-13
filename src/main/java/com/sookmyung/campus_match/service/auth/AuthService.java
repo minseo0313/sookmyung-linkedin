@@ -76,10 +76,8 @@ public class AuthService {
         String token = "dummy-token-" + user.getId();
         
         return TokenResponse.builder()
-                .token(token)
-                .userId(user.getId())
-                .username(user.getUsername())
-                .approvalStatus(user.getApprovalStatus())
+                .accessToken(token)
+                .expiresIn(3600L)
                 .build();
     }
 
@@ -102,18 +100,13 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        return BadgeResponse.builder()
-                .userId(user.getId())
-                .hasBadge(user.getApprovalStatus() == ApprovalStatus.APPROVED)
-                .approvalStatus(user.getApprovalStatus())
-                .isOperator(user.isOperator())
-                .build();
+        return BadgeResponse.from(user.getId(), user.getApprovalStatus(), user.isOperator());
     }
 
     public boolean verifyPassword(VerifyPasswordRequest request, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        return passwordEncoder.matches(request.getPassword(), user.getPassword());
+        return passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash());
     }
 }

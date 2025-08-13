@@ -34,6 +34,12 @@ public class SystemNoticeResponse {
     @Schema(description = "공지 수정일", example = "2025-08-10T16:00:00")
     private LocalDateTime updatedAt;
 
+    @Schema(description = "작성자 이름", example = "관리자")
+    private String adminName;
+
+    @Schema(description = "작성자 계정명", example = "admin")
+    private String adminUsername;
+
     public static SystemNoticeResponse from(SystemNotice notice) {
         return SystemNoticeResponse.builder()
                 .id(notice.getId())
@@ -44,6 +50,8 @@ public class SystemNoticeResponse {
                         LocalDateTime.ofInstant(Instant.from(notice.getCreatedAt()), java.time.ZoneId.systemDefault()) : null)
                 .updatedAt(notice.getUpdatedAt() != null ? 
                         LocalDateTime.ofInstant(Instant.from(notice.getUpdatedAt()), java.time.ZoneId.systemDefault()) : null)
+                .adminName(notice.getAdminName())
+                .adminUsername(notice.getAdminUsername())
                 .build();
     }
 }

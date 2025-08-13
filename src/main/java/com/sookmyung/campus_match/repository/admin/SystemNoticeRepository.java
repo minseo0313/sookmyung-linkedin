@@ -16,7 +16,7 @@ public interface SystemNoticeRepository extends JpaRepository<SystemNotice, Long
     List<SystemNotice> findTop5ByOrderByCreatedAtDesc();
 
     // 작성자별 공지 목록
-    Page<SystemNotice> findByCreatedByContainingIgnoreCase(String createdBy, Pageable pageable);
+    Page<SystemNotice> findByAdmin_UsernameContainingIgnoreCase(String adminUsername, Pageable pageable);
 
     // 전체 공지 개수
     long count();

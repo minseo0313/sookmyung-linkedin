@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.sookmyung.campus_match.domain.admin.Admin;
 
 @Slf4j
 @Service
@@ -63,8 +64,13 @@ public class AdminService {
     }
 
     @Transactional
-    public SystemNoticeResponse createNotice(SystemNoticeRequest request) {
+    public SystemNoticeResponse createNotice(SystemNoticeRequest request, String adminUsername) {
+        // TODO: 실제로는 SecurityContext에서 현재 로그인한 관리자 정보를 가져와야 함
+        // 임시로 null로 설정 (실제 구현 시 AdminRepository에서 조회)
+        Admin admin = null; // TODO: AdminRepository에서 adminUsername으로 조회
+        
         SystemNotice notice = SystemNotice.builder()
+                .admin(admin)
                 .title(request.getTitle())
                 .content(request.getContent())
                 .isActive(true)

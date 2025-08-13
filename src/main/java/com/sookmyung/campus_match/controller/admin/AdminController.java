@@ -73,7 +73,9 @@ public class AdminController {
     public ResponseEntity<ApiResponse<SystemNoticeResponse>> createNotice(
             @Valid @RequestBody SystemNoticeRequest request) {
         
-        SystemNoticeResponse notice = adminService.createNotice(request);
+        // TODO: 실제로는 SecurityContext에서 현재 로그인한 관리자 정보를 가져와야 함
+        String adminUsername = "admin"; // 임시 값
+        SystemNoticeResponse notice = adminService.createNotice(request, adminUsername);
         return ResponseEntity.ok(ApiResponse.success(notice));
     }
 

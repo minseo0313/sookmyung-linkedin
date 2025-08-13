@@ -149,4 +149,11 @@ public class MessageThread extends BaseEntity {
     public Long getParticipantBId() {
         return participantB != null ? participantB.getId() : null;
     }
+
+    /**
+     * 마지막 메시지 시간 업데이트 (MessageService에서 사용)
+     */
+    public void updateLastMessageAt(Instant lastMessageAt) {
+        this.lastMessageAt = lastMessageAt;
+    }
 }
