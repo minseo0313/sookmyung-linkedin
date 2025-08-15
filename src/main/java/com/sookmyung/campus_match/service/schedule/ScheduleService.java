@@ -94,7 +94,7 @@ public class ScheduleService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ApiException(ErrorCode.TEAM_NOT_FOUND, "팀을 찾을 수 없습니다."));
 
-        List<ScheduleAssignment> assignments = scheduleAssignmentRepository.findByTeamId(team.getId());
+        List<ScheduleAssignment> assignments = scheduleAssignmentRepository.findBySchedule_Team_Id(team.getId());
         
         return assignments.stream()
                 .map(ScheduleAssignmentResponse::from)

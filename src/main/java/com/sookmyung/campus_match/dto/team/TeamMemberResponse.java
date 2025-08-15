@@ -1,7 +1,7 @@
 package com.sookmyung.campus_match.dto.team;
 
 import com.sookmyung.campus_match.domain.team.TeamMember;
-import com.sookmyung.campus_match.domain.team.enum_.MemberRole;
+import com.sookmyung.campus_match.domain.common.enums.MemberRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 

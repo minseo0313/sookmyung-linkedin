@@ -1,6 +1,6 @@
 package com.sookmyung.campus_match.dto.message;
 
-import com.sookmyung.campus_match.domain.message.enum_.StartedFromType;
+import com.sookmyung.campus_match.domain.common.enums.StartedFromType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

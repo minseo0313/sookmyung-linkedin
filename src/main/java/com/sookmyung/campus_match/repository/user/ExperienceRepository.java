@@ -1,25 +1,32 @@
 package com.sookmyung.campus_match.repository.user;
 
 import com.sookmyung.campus_match.domain.user.Experience;
-import com.sookmyung.campus_match.domain.user.Profile;
-import com.sookmyung.campus_match.domain.user.enum_.ExperienceType;
+import com.sookmyung.campus_match.domain.common.enums.ExperienceType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
+@Repository
 public interface ExperienceRepository extends JpaRepository<Experience, Long> {
 
-    // 프로필 기준 조회
-    List<Experience> findByProfile(Profile profile);
-    List<Experience> findByProfile_Id(Long profileId);
-
-    // 정렬(표시 순서) 포함 조회
-    List<Experience> findByProfile_IdOrderBySortOrderAsc(Long profileId);
-
-    // 타입별 조회 (CAREER / ACTIVITY)
-    List<Experience> findByProfile_IdAndTypeOrderBySortOrderAsc(Long profileId, ExperienceType type);
-
-    // 카운트/일괄 삭제
-    long countByProfile_Id(Long profileId);
-    void deleteByProfile_Id(Long profileId);
+    List<Experience> findByUser_Id(Long userId);
+    
+    List<Experience> findByUser_IdAndExperienceType(Long userId, ExperienceType experienceType);
+    
+    @Query("SELECT e FROM Experience e WHERE " +
+           "e.user.id = :userId AND " +
+           "(:experienceType IS NULL OR e.experienceType = :experienceType) AND " +
+           "(:isCurrent IS NULL OR e.isCurrent = :isCurrent)")
+    Page<Experience> findByUserIdAndFilters(@Param("userId") Long userId,
+                                           @Param("experienceType") ExperienceType experienceType,
+                                           @Param("isCurrent") Boolean isCurrent,
+                                           Pageable pageable);
+    
+    List<Experience> findByUserIdOrderByStartDateDesc(Long userId);
 }

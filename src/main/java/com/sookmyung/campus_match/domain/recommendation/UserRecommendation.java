@@ -5,28 +5,38 @@ import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-/**
- * 사용자 추천 매핑 엔티티
- * - 특정 사용자(user)에게 추천되는 다른 사용자(recommendedUser)를 저장
- * - AI 기반 추천 결과를 DB에 캐싱/저장하여 빠른 조회 가능
- */
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "user_recommendations")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "user_recommendations")
 public class UserRecommendation extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user; // 추천을 받는 사용자
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recommended_user_id", nullable = false)
-    private User recommendedUser; // 추천된 사용자
+    private User recommendedUser;
 
-    @Column(nullable = false)
-    private double similarityScore; // 추천 유사도 점수 (0~1)
+    @Column(name = "similarity_score", precision = 5, scale = 4)
+    private BigDecimal similarityScore;
+
+    @Lob
+    @Column(name = "recommendation_reason", columnDefinition = "TEXT")
+    private String recommendationReason;
+
+    @Column(name = "generated_at", nullable = false)
+    private LocalDateTime generatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    // 호환성 메서드들
+    public double getSimilarityScore() {
+        return this.similarityScore != null ? this.similarityScore.doubleValue() : 0.0;
+    }
 }

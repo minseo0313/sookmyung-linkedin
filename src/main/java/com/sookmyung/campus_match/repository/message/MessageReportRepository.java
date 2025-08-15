@@ -1,31 +1,42 @@
 package com.sookmyung.campus_match.repository.message;
 
 import com.sookmyung.campus_match.domain.message.MessageReport;
-import com.sookmyung.campus_match.domain.message.enum_.ReportStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
+@Repository
 public interface MessageReportRepository extends JpaRepository<MessageReport, Long> {
 
-    // 특정 메시지의 모든 신고 내역
-    List<MessageReport> findByMessage_Id(Long messageId);
+    List<MessageReport> findByReportedUserId(Long reportedUserId);
+    
+    List<MessageReport> findByReportStatus(ApplicationStatus status);
+    
+    @Query("SELECT mr FROM MessageReport mr WHERE " +
+           "(:status IS NULL OR mr.reportStatus = :status) AND " +
+           "(:reportedUserId IS NULL OR mr.reportedUser.id = :reportedUserId)")
+    Page<MessageReport> findByStatusAndReportedUser(@Param("status") ApplicationStatus status,
+                                                   @Param("reportedUserId") Long reportedUserId,
+                                                   Pageable pageable);
+    
+    long countByReportStatus(ApplicationStatus status);
 
-    // 신고 상태별 조회 (관리자 페이지)
-    Page<MessageReport> findByStatus(ReportStatus status, Pageable pageable);
-
-    // 특정 유저가 한 신고 내역
-    List<MessageReport> findByReporter_Id(Long reporterId);
-
-    // 특정 메시지에 대해 해당 유저가 이미 신고했는지 여부
-    boolean existsByReporter_IdAndMessage_Id(Long reporterId, Long messageId);
-
-    // 메시지 + 상태로 단건 조회
-    Optional<MessageReport> findByMessage_IdAndStatus(Long messageId, ReportStatus status);
-
-    // 전체 개수(상태별)
-    long countByStatus(ReportStatus status);
+    // 추가 메서드들 (기존 서비스 코드와 호환성을 위해)
+    @Query("SELECT mr FROM MessageReport mr WHERE mr.reportedMessage.id = :messageId")
+    List<MessageReport> findByMessageId(@Param("messageId") Long messageId);
+    
+    @Query("SELECT mr FROM MessageReport mr WHERE mr.reportStatus = :status")
+    Page<MessageReport> findByStatus(@Param("status") ApplicationStatus status, Pageable pageable);
+    
+    @Query("SELECT mr FROM MessageReport mr WHERE mr.reporter.id = :reporterId")
+    List<MessageReport> findByReporterId(@Param("reporterId") Long reporterId);
+    
+    @Query("SELECT mr FROM MessageReport mr WHERE mr.reporter.id = :reporterId AND mr.reportedMessage.id = :messageId")
+    boolean existsByReporterIdAndMessageId(@Param("reporterId") Long reporterId, @Param("messageId") Long messageId);
 }

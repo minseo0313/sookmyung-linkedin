@@ -5,10 +5,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
     // 스레드 내 메시지 페이징 (시간 오름/내림차순)
@@ -36,4 +40,29 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     // 스레드 내 본문 검색(필요 시)
     Page<Message> findByThread_IdAndContentContainingIgnoreCase(Long threadId, String keyword, Pageable pageable);
+
+    // 기존 서비스 코드와의 호환성을 위한 메서드들 (중첩 속성 표기 사용)
+    List<Message> findByThread_Id(Long threadId);
+    
+    @Query("SELECT m FROM Message m WHERE m.thread.id = :threadId ORDER BY m.createdAt ASC")
+    List<Message> findByThread_IdOrderByCreatedAtAsc(@Param("threadId") Long threadId);
+    
+    @Query("SELECT m FROM Message m WHERE m.sender.id = :senderId ORDER BY m.createdAt DESC")
+    Page<Message> findBySender_IdOrderByCreatedAtDesc(@Param("senderId") Long senderId, Pageable pageable);
+
+    // 안전한 대안 메서드들 (@Query 사용)
+    @Query("SELECT m FROM Message m WHERE m.thread.id = :threadId")
+    List<Message> findByThreadIdSafe(@Param("threadId") Long threadId);
+    
+    @Query("SELECT m FROM Message m WHERE m.sender.id = :senderId")
+    List<Message> findBySenderIdSafe(@Param("senderId") Long senderId);
+    
+    @Query("SELECT COUNT(m) FROM Message m WHERE m.thread.id = :threadId")
+    long countByThreadIdSafe(@Param("threadId") Long threadId);
+    
+    @Query("SELECT m FROM Message m WHERE m.thread.id = :threadId ORDER BY m.createdAt ASC")
+    List<Message> findAllByThreadIdOrderByCreatedAtAscSafe(@Param("threadId") Long threadId);
+    
+    @Query("SELECT m FROM Message m WHERE m.thread.id = :threadId ORDER BY m.createdAt DESC")
+    List<Message> findAllByThreadIdOrderByCreatedAtDescSafe(@Param("threadId") Long threadId);
 }

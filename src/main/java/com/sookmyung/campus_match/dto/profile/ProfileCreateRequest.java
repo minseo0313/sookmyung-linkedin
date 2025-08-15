@@ -1,6 +1,6 @@
 package com.sookmyung.campus_match.dto.profile;
 
-import com.sookmyung.campus_match.domain.user.enum_.ExperienceType;
+import com.sookmyung.campus_match.domain.common.enums.ExperienceType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

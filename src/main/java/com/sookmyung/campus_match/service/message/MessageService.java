@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,11 +48,11 @@ public class MessageService {
         if (thread == null) {
             // 새로운 스레드 생성
             thread = MessageThread.builder()
-                    .participantA(sender)
-                    .participantB(recipient)
+                    .user1(sender)
+                    .user2(recipient)
                     .startedFromType(request.getStartedFromType())
                     .startedFromId(request.getStartedFromId())
-                    .lastMessageAt(Instant.now())
+                    .lastMessageAt(LocalDateTime.now())
                     .build();
             thread = messageThreadRepository.save(thread);
         }
@@ -60,13 +61,13 @@ public class MessageService {
         Message message = Message.builder()
                 .thread(thread)
                 .sender(sender)
-                .content(request.getContent())
+                .messageContent(request.getContent())
                 .build();
 
         Message savedMessage = messageRepository.save(message);
 
         // 스레드의 마지막 메시지 시간 업데이트
-        thread.updateLastMessageAt(Instant.now());
+        thread.updateLastMessageAt(LocalDateTime.now());
         messageThreadRepository.save(thread);
 
         return MessageResponse.from(savedMessage);
@@ -131,13 +132,13 @@ public class MessageService {
         Message reply = Message.builder()
                 .thread(thread)
                 .sender(sender)
-                .content(request.getContent())
+                .messageContent(request.getContent())
                 .build();
 
         Message savedReply = messageRepository.save(reply);
 
         // 스레드의 마지막 메시지 시간 업데이트
-        thread.updateLastMessageAt(Instant.now());
+        thread.updateLastMessageAt(LocalDateTime.now());
         messageThreadRepository.save(thread);
 
         return MessageResponse.from(savedReply);

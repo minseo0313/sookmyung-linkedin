@@ -5,178 +5,157 @@ import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
+@Entity
+@Table(name = "posts")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(
-        name = "posts",
-        indexes = {
-                @Index(name = "idx_posts_author_id", columnList = "author_id"),
-                @Index(name = "idx_posts_category_id", columnList = "category_id"),
-                @Index(name = "idx_posts_closed", columnList = "is_closed"),
-                @Index(name = "idx_posts_created", columnList = "created_at")
-        }
-)
 public class Post extends BaseEntity {
 
-    /** 작성자 (필수) */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "author_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_posts_user"))
-    private User author;
-
-    /** 카테고리 (예: 개발/디자인/공모전 등) */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id",
-            foreignKey = @ForeignKey(name = "fk_posts_category"))
+    @JoinColumn(name = "category_id")
     private PostCategory category;
 
-    /** 제목 */
-    @Column(nullable = false, length = 150)
-    private String title;
+    @Column(name = "post_title", nullable = false, length = 255)
+    private String postTitle;
 
-    /** 본문 */
     @Lob
-    @Column(nullable = false)
-    private String content;
+    @Column(name = "post_content", columnDefinition = "TEXT")
+    private String postContent;
 
-    /** 모집 인원 */
-    @Column(nullable = false)
-    @Builder.Default
-    private int recruitCount = 1;
+    @Column(name = "required_roles", length = 255)
+    private String requiredRoles;
 
-    /** 요구 역할(예: "디자이너", "백엔드", "데이터") */
-    @ElementCollection
-    @CollectionTable(
-            name = "post_required_roles",
-            joinColumns = @JoinColumn(name = "post_id",
-                    foreignKey = @ForeignKey(name = "fk_post_required_roles_post"))
-    )
-    @Column(name = "role", length = 50, nullable = false)
-    @Builder.Default
-    private List<String> requiredRoles = new ArrayList<>();
+    @Column(name = "recruitment_count")
+    private Integer recruitmentCount;
 
-    /** 기간(자유 형식: "2주", "2025-08-15 ~ 2025-09-01" 등) */
-    @Column(length = 60)
+    @Column(name = "duration", length = 255)
     private String duration;
 
-    /** 관련 링크(선택) */
-    @Column(length = 500)
-    private String link;
+    @Column(name = "link_url", length = 255)
+    private String linkUrl;
 
-    /** 대표 이미지(선택) */
-    @Column(length = 500)
+    @Column(name = "image_url", length = 255)
     private String imageUrl;
 
-    /** 조회수 */
-    @Column(nullable = false)
-    @Builder.Default
-    private long views = 0L;
+    @Column(name = "is_closed")
+    private Boolean isClosed;
 
-    /** 좋아요 수 */
-    @Column(nullable = false)
-    @Builder.Default
-    private int likeCount = 0;
+    @Column(name = "view_count")
+    private Integer viewCount;
 
-    /** 댓글 수 */
-    @Column(nullable = false)
-    @Builder.Default
-    private int commentCount = 0;
+    @Column(name = "like_count")
+    private Integer likeCount;
 
-    /** 모집 마감 여부 (팀 매칭 완료 시 true) */
-    @Column(name = "is_closed", nullable = false)
-    @Builder.Default
-    private boolean closed = false;
+    @Column(name = "comment_count")
+    private Integer commentCount;
 
-    /** 매칭된 팀 ID(선택, 생성 후 연결) */
-    @Column
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
+
+    // 추가 필드들 (기존 서비스 코드와 호환성을 위해)
+    @Column(name = "matched_team_id")
     private Long matchedTeamId;
 
-    /* ============= (옵션) 양방향 연관 ============= */
-    /** 댓글 목록 */
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<PostComment> comments = new ArrayList<>();
+    // TODO: DB 마이그레이션 시 제거할 필드들
+    // @Column(name = "user_id") - author_id와 중복, author_id만 사용
 
-    /** 좋아요 목록 */
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<PostLike> likes = new ArrayList<>();
-
-    /** 신청 목록 */
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<PostApplication> applications = new ArrayList<>();
-
-    /* ============= 편의/도메인 메서드 ============= */
-
-    /** 조회수 증가 */
-    public void increaseViews(long by) {
-        if (by > 0) this.views += by;
+    // 도메인 메서드들
+    public void closeRecruit() {
+        this.isClosed = true;
     }
 
-    /** 좋아요 수 증감(토글 처리 시 서비스에서 호출) */
-    public void increaseLikeCount(int by) {
-        this.likeCount = Math.max(0, this.likeCount + by);
-    }
-
-    /** 댓글 수 증감 */
-    public void increaseCommentCount(int by) {
-        this.commentCount = Math.max(0, this.commentCount + by);
-    }
-
-    /** 모집 마감 처리 */
     public void closeRecruitment() {
-        this.closed = true;
+        this.isClosed = true;
     }
 
-    /** 팀 매칭 연결 */
+    public void openRecruit() {
+        this.isClosed = false;
+    }
+
+    public void increaseView() {
+        this.viewCount = (this.viewCount == null ? 1 : this.viewCount + 1);
+    }
+
+    public void increaseLike() {
+        this.likeCount = (this.likeCount == null ? 1 : this.likeCount + 1);
+    }
+
+    public void decreaseLike() {
+        if (this.likeCount != null && this.likeCount > 0) this.likeCount--;
+    }
+
+    public void increaseComment() {
+        this.commentCount = (this.commentCount == null ? 1 : this.commentCount + 1);
+    }
+
+    public void decreaseComment() {
+        if (this.commentCount != null && this.commentCount > 0) this.commentCount--;
+    }
+
+    public void increaseCommentCount(int by) {
+        this.commentCount = (this.commentCount == null ? by : this.commentCount + by);
+    }
+
+    public void increaseLikeCount(int by) {
+        this.likeCount = (this.likeCount == null ? by : this.likeCount + by);
+    }
+
     public void linkMatchedTeam(Long teamId) {
         this.matchedTeamId = teamId;
-        this.closed = true;
+        this.isClosed = true;
     }
 
-    /* 연관관계 편의 메서드 (필요 시 사용) */
-    public void addComment(PostComment comment) {
-        if (comment == null) return;
-        comments.add(comment);
-        comment.setPost(this);
-        increaseCommentCount(1);
+    // 호환성 메서드들
+    public User getAuthor() {
+        return this.author;
     }
 
-    public void removeComment(PostComment comment) {
-        if (comment == null) return;
-        comments.remove(comment);
-        comment.setPost(null);
-        increaseCommentCount(-1);
+    public String getTitle() {
+        return this.postTitle;
     }
 
-    public void addApplication(PostApplication application) {
-        if (application == null) return;
-        applications.add(application);
-        application.setPost(this);
+    public String getContent() {
+        return this.postContent;
     }
 
-    public void addRequiredRole(String role) {
-        if (role != null && !role.isBlank()) requiredRoles.add(role);
+    public Long getViews() {
+        return this.viewCount != null ? this.viewCount.longValue() : 0L;
     }
 
-    /**
-     * 카테고리 ID 조회
-     */
-    public Long getCategoryId() {
-        return category != null ? category.getId() : null;
+    public boolean isClosed() {
+        return this.isClosed != null ? this.isClosed : false;
     }
 
-    /**
-     * 작성자 ID 조회
-     */
     public Long getAuthorId() {
-        return author != null ? author.getId() : null;
+        return this.author != null ? this.author.getId() : null;
+    }
+
+    public Long getCategoryId() {
+        return this.category != null ? this.category.getId() : null;
+    }
+
+    public Integer getRecruitCount() {
+        return this.recruitmentCount;
+    }
+
+    public String getLink() {
+        return this.linkUrl;
+    }
+
+    // 빌더 메서드 추가
+    public static class PostBuilder {
+        public PostBuilder recruitCount(Integer recruitCount) {
+            this.recruitmentCount = recruitCount;
+            return this;
+        }
+
+        public PostBuilder link(String link) {
+            this.linkUrl = link;
+            return this;
+        }
     }
 }

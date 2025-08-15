@@ -1,6 +1,6 @@
 package com.sookmyung.campus_match.controller.profile;
 
-import com.sookmyung.campus_match.domain.user.enum_.InterestType;
+import com.sookmyung.campus_match.domain.common.enums.InterestType;
 import com.sookmyung.campus_match.dto.common.ApiResponse;
 import com.sookmyung.campus_match.dto.profile.ProfileCreateRequest;
 import com.sookmyung.campus_match.dto.profile.ProfileResponse;

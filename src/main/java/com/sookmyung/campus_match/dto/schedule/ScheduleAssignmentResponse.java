@@ -1,7 +1,7 @@
 package com.sookmyung.campus_match.dto.schedule;
 
 import com.sookmyung.campus_match.domain.team.ScheduleAssignment;
-import com.sookmyung.campus_match.domain.team.enum_.AssignmentStatus;
+import com.sookmyung.campus_match.domain.common.enums.AssignmentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 

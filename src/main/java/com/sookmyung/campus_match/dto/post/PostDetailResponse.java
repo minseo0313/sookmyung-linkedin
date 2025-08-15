@@ -76,7 +76,8 @@ public class PostDetailResponse {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .recruitCount(post.getRecruitCount())
-                .requiredRoles(post.getRequiredRoles())
+                .requiredRoles(post.getRequiredRoles() != null ? 
+                        List.of(post.getRequiredRoles().split(",")) : List.of())
                 .duration(post.getDuration())
                 .link(post.getLink())
                 .imageUrl(post.getImageUrl())

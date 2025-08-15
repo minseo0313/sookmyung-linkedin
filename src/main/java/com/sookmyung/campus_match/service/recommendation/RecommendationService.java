@@ -10,13 +10,14 @@ import com.sookmyung.campus_match.repository.recommendation.UserRecommendationRe
 import com.sookmyung.campus_match.repository.user.UserInterestRepository;
 import com.sookmyung.campus_match.repository.user.UserRepository;
 import com.sookmyung.campus_match.repository.post.PostRepository;
-import com.sookmyung.campus_match.domain.user.enum_.ApprovalStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.math.BigDecimal;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -53,7 +54,7 @@ public class RecommendationService {
                 UserRecommendation recommendation = UserRecommendation.builder()
                         .user(user)
                         .recommendedUser(candidate)
-                        .similarityScore(similarityScore)
+                        .similarityScore(BigDecimal.valueOf(similarityScore))
                         .build();
                 
                 recommendations.add(recommendation);
@@ -226,7 +227,7 @@ public class RecommendationService {
      * 사용자의 추천 목록 조회
      */
     public List<UserRecommendation> getRecommendationsForUser(Long userId) {
-        return userRecommendationRepository.findByUserId(userId);
+        return userRecommendationRepository.findByUser_Id(userId);
     }
 
     /**

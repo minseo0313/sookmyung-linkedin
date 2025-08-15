@@ -1,6 +1,6 @@
 package com.sookmyung.campus_match.dto.message;
 
-import com.sookmyung.campus_match.domain.message.enum_.ReportStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApplicationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -26,7 +26,7 @@ public class MessageReportResponse {
     private String reason;
 
     @Schema(description = "신고 처리 상태", example = "PENDING")
-    private ReportStatus status;
+    private ApplicationStatus status;
 
     @Schema(description = "신고 일시", example = "2025-08-10T14:30:00")
     private LocalDateTime reportedAt;

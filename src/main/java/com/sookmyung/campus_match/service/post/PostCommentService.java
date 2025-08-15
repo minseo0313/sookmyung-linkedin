@@ -3,7 +3,7 @@ package com.sookmyung.campus_match.service.post;
 import com.sookmyung.campus_match.domain.post.Post;
 import com.sookmyung.campus_match.domain.post.PostComment;
 import com.sookmyung.campus_match.domain.user.User;
-import com.sookmyung.campus_match.domain.user.enum_.ApprovalStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import com.sookmyung.campus_match.dto.comment.PostCommentCreateRequest;
 import com.sookmyung.campus_match.dto.comment.PostCommentResponse;
 import com.sookmyung.campus_match.repository.post.PostCommentRepository;
@@ -71,8 +71,8 @@ public class PostCommentService {
         
         PostComment comment = PostComment.builder()
                 .post(post)
-                .author(user)
-                .content(request.getContent())
+                .user(user)
+                .commentContent(request.getContent())
                 .build();
         
         PostComment savedComment = postCommentRepository.save(comment);
@@ -93,7 +93,7 @@ public class PostCommentService {
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
         
         // 작성자 확인
-        if (!comment.getAuthor().getUsername().equals(username)) {
+        if (!comment.getUser().getUsername().equals(username)) {
             throw new IllegalArgumentException("댓글 작성자만 수정할 수 있습니다.");
         }
         
@@ -112,7 +112,7 @@ public class PostCommentService {
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
         
         // 작성자 확인
-        if (!comment.getAuthor().getUsername().equals(username)) {
+        if (!comment.getUser().getUsername().equals(username)) {
             throw new IllegalArgumentException("댓글 작성자만 삭제할 수 있습니다.");
         }
         
@@ -133,7 +133,7 @@ public class PostCommentService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
-        Page<PostComment> comments = postCommentRepository.findByAuthor_IdOrderByCreatedAtDesc(user.getId(), pageable);
+        Page<PostComment> comments = postCommentRepository.findByUser_IdOrderByCreatedAtDesc(user.getId(), pageable);
         
         return comments.map(PostCommentResponse::from);
     }

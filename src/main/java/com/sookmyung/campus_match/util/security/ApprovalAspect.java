@@ -1,7 +1,7 @@
 package com.sookmyung.campus_match.util.security;
 
 import com.sookmyung.campus_match.domain.user.User;
-import com.sookmyung.campus_match.domain.user.enum_.ApprovalStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import com.sookmyung.campus_match.exception.ApiException;
 import com.sookmyung.campus_match.exception.ErrorCode;
 import com.sookmyung.campus_match.repository.user.UserRepository;

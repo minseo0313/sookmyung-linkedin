@@ -2,7 +2,7 @@ package com.sookmyung.campus_match.dto.profile;
 
 import com.sookmyung.campus_match.domain.user.Experience;
 import com.sookmyung.campus_match.domain.user.Profile;
-import com.sookmyung.campus_match.domain.user.enum_.ExperienceType;
+import com.sookmyung.campus_match.domain.common.enums.ExperienceType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -48,7 +48,7 @@ public class ProfileResponse {
     public static class ExperienceDto {
 
         @Schema(description = "경력 유형", example = "CAREER")
-        private ExperienceType type;
+        private String type;
 
         @Schema(description = "제목", example = "동아리 임원")
         private String title;
@@ -71,7 +71,7 @@ public class ProfileResponse {
 
     public static ProfileResponse from(Profile profile, List<String> interestNames, List<Experience> experiences) {
         return ProfileResponse.builder()
-                .id(profile.getId())
+                .id(profile.getUserId())
                 .userId(profile.getUserId())
                 .headline(profile.getHeadline())
                 .bio(profile.getBio())

@@ -46,10 +46,8 @@ public class SystemNoticeResponse {
                 .title(notice.getTitle())
                 .content(notice.getContent())
                 .active(notice.isActive())
-                .createdAt(notice.getCreatedAt() != null ? 
-                        LocalDateTime.ofInstant(Instant.from(notice.getCreatedAt()), java.time.ZoneId.systemDefault()) : null)
-                .updatedAt(notice.getUpdatedAt() != null ? 
-                        LocalDateTime.ofInstant(Instant.from(notice.getUpdatedAt()), java.time.ZoneId.systemDefault()) : null)
+                .createdAt(notice.getCreatedAt())
+                .updatedAt(notice.getUpdatedAt())
                 .adminName(notice.getAdminName())
                 .adminUsername(notice.getAdminUsername())
                 .build();

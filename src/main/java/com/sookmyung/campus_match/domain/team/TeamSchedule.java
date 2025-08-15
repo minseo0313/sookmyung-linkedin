@@ -1,114 +1,110 @@
 package com.sookmyung.campus_match.domain.team;
 
 import com.sookmyung.campus_match.domain.common.BaseEntity;
+import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * 팀 일정 엔티티
- * - 팀 비서 캘린더의 단일 일정
- * - 일정별 개인 업무 할당은 ScheduleAssignment로 관리
- */
+@Entity
+@Table(name = "team_schedules")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(
-        name = "team_schedules",
-        indexes = {
-                @Index(name = "idx_team_schedules_team_id", columnList = "team_id"),
-                @Index(name = "idx_team_schedules_start_at", columnList = "start_at"),
-                @Index(name = "idx_team_schedules_end_at", columnList = "end_at"),
-                @Index(name = "idx_team_schedules_created", columnList = "created_at")
-        }
-)
 public class TeamSchedule extends BaseEntity {
 
-    /** 소속 팀 */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "team_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_team_schedules_team"))
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
+    @Column(name = "schedule_title", nullable = false, length = 255)
+    private String scheduleTitle;
+
+    @Lob
+    @Column(name = "schedule_description", columnDefinition = "TEXT")
+    private String scheduleDescription;
+
+    @Column(name = "start_date", nullable = false)
+    private LocalDateTime startDate;
+
+    @Column(name = "end_date", nullable = false)
+    private LocalDateTime endDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "secretary_id", nullable = false)
+    private TeamSecretary secretary;
+
+    // 추가 필드들 (기존 서비스 코드와 호환성을 위해)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
     private Team team;
 
-    /** 일정 제목 */
-    @Column(nullable = false, length = 120)
-    private String title;
-
-    /** 일정 설명(선택) */
-    @Column(length = 500)
-    private String description;
-
-    /** 시작/종료 시각 */
-    @Column(name = "start_at", nullable = false)
-    private LocalDateTime startAt;
-
-    @Column(name = "end_at", nullable = false)
-    private LocalDateTime endAt;
-
-    /** 종일 여부 */
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean allDay = false;
-
-    /** 장소(선택) */
-    @Column(length = 120)
-    private String location;
-
-    /** 개인 업무 할당 목록 */
-    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<ScheduleAssignment> assignments = new ArrayList<>();
-
-    /* ==========================
-       연관관계 편의 메서드
-       ========================== */
-
-    public void setTeam(Team team) {
-        this.team = team;
+    // 호환성 메서드들
+    public String getTitle() {
+        return this.scheduleTitle;
     }
 
-    public void addAssignment(ScheduleAssignment assignment) {
-        if (assignment == null) return;
-        assignments.add(assignment);
-        assignment.setSchedule(this);
+    public String getDescription() {
+        return this.scheduleDescription;
     }
 
-    public void removeAssignment(ScheduleAssignment assignment) {
-        if (assignment == null) return;
-        assignments.remove(assignment);
-        assignment.setSchedule(null);
+    public LocalDateTime getStartAt() {
+        return this.startDate;
     }
 
-    /* ==========================
-       상태 변경/유틸 메서드
-       ========================== */
+    public LocalDateTime getEndAt() {
+        return this.endDate;
+    }
 
-    public void updateBasics(String title, String description, String location, Boolean allDay) {
-        if (title != null && !title.isBlank()) this.title = title;
-        if (description != null) this.description = description;
-        if (location != null) this.location = location;
-        if (allDay != null) this.allDay = allDay;
+    public boolean isAllDay() {
+        return false; // 기본값
+    }
+
+    public String getLocation() {
+        return null; // 기본값
+    }
+
+    // 도메인 메서드들
+    public void updateBasics(String title, String description, LocalDateTime startAt, LocalDateTime endAt) {
+        this.scheduleTitle = title;
+        this.scheduleDescription = description;
+        if (startAt != null) this.startDate = startAt;
+        if (endAt != null) this.endDate = endAt;
     }
 
     public void reschedule(LocalDateTime startAt, LocalDateTime endAt) {
-        validatePeriod(startAt, endAt);
-        this.startAt = startAt;
-        this.endAt = endAt;
+        this.startDate = startAt;
+        this.endDate = endAt;
     }
 
-    public boolean overlaps(LocalDateTime otherStart, LocalDateTime otherEnd) {
-        if (otherStart == null || otherEnd == null) return false;
-        return !otherEnd.isBefore(this.startAt) && !otherStart.isAfter(this.endAt);
-    }
+    // 빌더 메서드 추가
+    public static class TeamScheduleBuilder {
+        public TeamScheduleBuilder team(Team team) {
+            this.team = team;
+            return this;
+        }
 
-    private void validatePeriod(LocalDateTime startAt, LocalDateTime endAt) {
-        if (startAt == null || endAt == null || endAt.isBefore(startAt)) {
-            throw new IllegalArgumentException("Invalid period: startAt/endAt");
+        public TeamScheduleBuilder title(String title) {
+            this.scheduleTitle = title;
+            return this;
+        }
+
+        public TeamScheduleBuilder description(String description) {
+            this.scheduleDescription = description;
+            return this;
+        }
+
+        public TeamScheduleBuilder startAt(LocalDateTime startAt) {
+            this.startDate = startAt;
+            return this;
+        }
+
+        public TeamScheduleBuilder endAt(LocalDateTime endAt) {
+            this.endDate = endAt;
+            return this;
         }
     }
 }

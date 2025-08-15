@@ -1,114 +1,102 @@
 package com.sookmyung.campus_match.domain.user;
 
-import com.sookmyung.campus_match.domain.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "profiles")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(
-        name = "profiles",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_profiles_user_id", columnNames = {"user_id"})
-        },
-        indexes = {
-                @Index(name = "idx_profiles_user_id", columnList = "user_id")
-        }
-)
-public class Profile extends BaseEntity {
+public class Profile {
 
-    /** 프로필 소유자 (1:1) */
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, unique = true,
-            foreignKey = @ForeignKey(name = "fk_profiles_user"))
+    @Id
+    private Long userId;
+
+    @MapsId
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
-    /** 상단 한 줄 소개 */
-    @Column(nullable = false, length = 120)
-    private String headline;
+    @Column(name = "department", length = 255)
+    private String department;
 
-    /** 자기소개 본문 */
-    @Lob
-    @Column(nullable = false)
+    @Column(name = "student_code", length = 2)
+    private String studentCode;
+
+    @Column(name = "bio", length = 100)
     private String bio;
 
-    /** 인사 받기 허용 여부 (프로필에서 DM 시작 가능 여부) */
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean greetingEnabled = true;
+    @Column(name = "profile_image_url", length = 255)
+    private String profileImageUrl;
 
-    /** 프로필 조회수 */
-    @Column(nullable = false)
-    @Builder.Default
-    private int viewCount = 0;
+    @Column(name = "location", length = 255)
+    private String location;
 
-    /** 경력/활동 목록 (프로필 소유, 삭제 시 함께 제거) */
-    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Experience> experiences = new ArrayList<>();
+    @Column(name = "website_url", length = 255)
+    private String websiteUrl;
 
-    /* ==========================
-       연관관계 편의 메서드
-       ========================== */
+    @Column(name = "linkedin_url", length = 255)
+    private String linkedinUrl;
 
-    public void addExperience(Experience experience) {
-        if (experience == null) return;
-        experiences.add(experience);
-        experience.setProfile(this);
-    }
+    @Column(name = "view_count")
+    private Integer viewCount;
 
-    public void removeExperience(Experience experience) {
-        if (experience == null) return;
-        experiences.remove(experience);
-        experience.setProfile(null);
-    }
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    /* ==========================
-       상태 변경 메서드
-       ========================== */
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    public void updateIntro(String headline, String bio) {
-        if (headline != null) this.headline = headline;
-        if (bio != null) this.bio = bio;
-    }
+    // 추가 필드들 (기존 서비스 코드와 호환성을 위해)
+    @Column(name = "headline", length = 255)
+    private String headline;
 
-    public void setGreetingEnabled(boolean enabled) {
-        this.greetingEnabled = enabled;
-    }
+    @Column(name = "greeting_enabled")
+    private Boolean greetingEnabled;
 
-    /**
-     * 사용자 ID 조회
-     */
-    public Long getUserId() {
-        return user != null ? user.getId() : null;
-    }
-
-    /**
-     * 프로필 정보 업데이트 (ProfileService에서 사용)
-     */
+    // 도메인 메서드들
     public void update(String headline, String bio, boolean greetingEnabled) {
-        if (headline != null) this.headline = headline;
-        if (bio != null) this.bio = bio;
+        this.headline = headline;
+        this.bio = bio;
         this.greetingEnabled = greetingEnabled;
+        this.updatedAt = LocalDateTime.now();
     }
 
-    /**
-     * 조회수 증가
-     */
     public void incrementViewCount() {
-        this.viewCount++;
+        this.viewCount = (this.viewCount == null ? 1 : this.viewCount + 1);
     }
 
-    /**
-     * 조회수 조회
-     */
-    public int getViewCount() {
-        return this.viewCount;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    // 호환성 메서드들
+    public Long getUserId() {
+        return this.user != null ? this.user.getId() : null;
+    }
+
+    public String getHeadline() {
+        return this.headline;
+    }
+
+    public boolean isGreetingEnabled() {
+        return this.greetingEnabled != null ? this.greetingEnabled : false;
+    }
+
+    // 빌더 메서드 추가
+    public static class ProfileBuilder {
+        public ProfileBuilder headline(String headline) {
+            this.headline = headline;
+            return this;
+        }
     }
 }

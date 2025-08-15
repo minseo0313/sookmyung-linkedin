@@ -1,7 +1,7 @@
 package com.sookmyung.campus_match.service.auth;
 
 import com.sookmyung.campus_match.domain.user.User;
-import com.sookmyung.campus_match.domain.user.enum_.ApprovalStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import com.sookmyung.campus_match.dto.auth.BadgeResponse;
 import com.sookmyung.campus_match.dto.auth.TokenResponse;
 import com.sookmyung.campus_match.dto.auth.UserLoginRequest;

@@ -2,7 +2,7 @@ package com.sookmyung.campus_match.service.search;
 
 import com.sookmyung.campus_match.domain.post.Post;
 import com.sookmyung.campus_match.domain.user.User;
-import com.sookmyung.campus_match.domain.user.enum_.ApprovalStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import com.sookmyung.campus_match.dto.search.PostSearchResponse;
 import com.sookmyung.campus_match.dto.search.UserSearchResponse;
 import com.sookmyung.campus_match.repository.post.PostRepository;
@@ -41,7 +41,7 @@ public class SearchService {
         
         // 내용에서 키워드 검색
         List<Post> contentMatches = postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
-                keyword, keyword, Pageable.ofSize(10)).getContent();
+                keyword, Pageable.ofSize(10)).getContent();
 
         // 키워드 추출 및 중복 제거
         Set<String> suggestions = titleMatches.stream()
@@ -108,7 +108,7 @@ public class SearchService {
         }
 
         Page<Post> posts = postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
-                keyword, keyword, pageable);
+                keyword, pageable);
 
         return posts.map(PostSearchResponse::from);
     }

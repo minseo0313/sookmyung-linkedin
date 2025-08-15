@@ -1,52 +1,34 @@
 package com.sookmyung.campus_match.repository.team;
 
 import com.sookmyung.campus_match.domain.team.TeamSchedule;
+import com.sookmyung.campus_match.domain.team.Team;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface TeamScheduleRepository extends JpaRepository<TeamSchedule, Long> {
 
-    // 팀별 일정 목록 (시작 시간 오름차순)
-    List<TeamSchedule> findByTeam_IdOrderByStartAtAsc(Long teamId);
-
-    // 팀별 일정 페이징
-    Page<TeamSchedule> findByTeam_Id(Long teamId, Pageable pageable);
-
-    // 기간 내 일정
-    List<TeamSchedule> findByTeam_IdAndStartAtBetweenOrderByStartAtAsc(Long teamId,
-                                                                       LocalDateTime from,
-                                                                       LocalDateTime to);
-
-    // 앞으로 다가오는 일정 Top N (예: 캘린더 위젯)
-    List<TeamSchedule> findTop10ByTeam_IdAndStartAtGreaterThanEqualOrderByStartAtAsc(Long teamId,
-                                                                                     LocalDateTime from);
-
-    // 제목 키워드 검색 + 페이징
-    Page<TeamSchedule> findByTeam_IdAndTitleContainingIgnoreCase(Long teamId,
-                                                                 String keyword,
-                                                                 Pageable pageable);
-
-    // 기간 겹치는 일정 조회 (overlap 조건: !(end < start || start > end))
-    @Query("""
-           select s
-             from TeamSchedule s
-            where s.team.id = :teamId
-              and not (s.endAt < :startAt or s.startAt > :endAt)
-            order by s.startAt asc
-           """)
-    List<TeamSchedule> findOverlappingSchedules(Long teamId,
-                                                LocalDateTime startAt,
-                                                LocalDateTime endAt);
-
-    // 팀별 일정 개수/일괄 삭제
-    long countByTeam_Id(Long teamId);
-    void deleteByTeam_Id(Long teamId);
+    List<TeamSchedule> findBySecretaryId(Long secretaryId);
     
-    // 팀으로 일정 조회 (서비스에서 사용)
-    List<TeamSchedule> findByTeam(com.sookmyung.campus_match.domain.team.Team team);
+    List<TeamSchedule> findByCreatedById(Long createdById);
+    
+    @Query("SELECT ts FROM TeamSchedule ts WHERE " +
+           "ts.secretary.team.id = :teamId AND " +
+           "ts.startDate >= :startDate AND ts.endDate <= :endDate")
+    List<TeamSchedule> findByTeamIdAndDateRange(@Param("teamId") Long teamId,
+                                                @Param("startDate") LocalDateTime startDate,
+                                                @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT ts FROM TeamSchedule ts WHERE ts.secretary.team.id = :teamId ORDER BY ts.startDate ASC")
+    Page<TeamSchedule> findByTeamIdOrderByStartDate(@Param("teamId") Long teamId, Pageable pageable);
+
+    // 추가 메서드들 (기존 서비스 코드와 호환성을 위해)
+    List<TeamSchedule> findByTeam(Team team);
 }

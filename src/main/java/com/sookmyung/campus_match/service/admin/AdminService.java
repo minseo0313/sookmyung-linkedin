@@ -2,7 +2,7 @@ package com.sookmyung.campus_match.service.admin;
 
 import com.sookmyung.campus_match.domain.admin.SystemNotice;
 import com.sookmyung.campus_match.domain.user.User;
-import com.sookmyung.campus_match.domain.user.enum_.ApprovalStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import com.sookmyung.campus_match.dto.admin.ApproveUserRequest;
 import com.sookmyung.campus_match.dto.admin.StatisticsResponse;
 import com.sookmyung.campus_match.dto.admin.SystemNoticeRequest;
@@ -70,10 +70,9 @@ public class AdminService {
         Admin admin = null; // TODO: AdminRepository에서 adminUsername으로 조회
         
         SystemNotice notice = SystemNotice.builder()
-                .admin(admin)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .isActive(true)
+                .createdBy(admin)
+                .noticeTitle(request.getTitle())
+                .noticeContent(request.getContent())
                 .build();
 
         SystemNotice savedNotice = systemNoticeRepository.save(notice);

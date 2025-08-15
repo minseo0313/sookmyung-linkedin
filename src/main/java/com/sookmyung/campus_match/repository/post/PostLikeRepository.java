@@ -4,30 +4,31 @@ import com.sookmyung.campus_match.domain.post.PostLike;
 import com.sookmyung.campus_match.domain.post.Post;
 import com.sookmyung.campus_match.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
-    // 게시글별 좋아요 목록 조회
-    List<PostLike> findByPost(Post post);
-    List<PostLike> findByPostId(Long postId);
-
-    // 특정 유저가 누른 좋아요 조회
-    List<PostLike> findByUser(User user);
-    List<PostLike> findByUserId(Long userId);
-
-    // 유저가 특정 게시글에 좋아요 눌렀는지 여부
-    boolean existsByUserAndPost(User user, Post post);
-    boolean existsByUserIdAndPostId(Long userId, Long postId);
+    // 중첩 속성 표기를 사용한 메서드들
+    List<PostLike> findByPost_Id(Long postId);
     
-    // Post + User로 조회 (서비스에서 사용)
+    List<PostLike> findByUser_Id(Long userId);
+    
+    Optional<PostLike> findByPost_IdAndUser_Id(Long postId, Long userId);
+    
+    boolean existsByPost_IdAndUser_Id(Long postId, Long userId);
+    
+    long countByPost_Id(Long postId);
+
+    // 추가 메서드들 (기존 서비스 코드와 호환성을 위해)
     boolean existsByPostAndUser(Post post, User user);
-
-    // 좋아요 단건 삭제 (유저가 누른 좋아요 취소)
+    
+    boolean existsByUserAndPost(User user, Post post);
+    
     void deleteByUserAndPost(User user, Post post);
-
-    // 좋아요 개수
-    long countByPostId(Long postId);
 }

@@ -5,90 +5,60 @@ import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-/**
- * 1:1 메시지의 단건 레코드
- * - 스레드(MessageThread) 소속
- * - 작성자(sender) 기준 단방향 연관
- * - 소프트 삭제 지원
- */
+@Entity
+@Table(name = "messages")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(
-        name = "messages",
-        indexes = {
-                @Index(name = "idx_messages_thread_id", columnList = "thread_id"),
-                @Index(name = "idx_messages_sender_id", columnList = "sender_id"),
-                @Index(name = "idx_messages_created", columnList = "created_at")
-        }
-)
 public class Message extends BaseEntity {
 
-    /** 소속 스레드 */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "thread_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_messages_thread"))
-    private MessageThread thread;
-
-    /** 발신자 */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "sender_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_messages_sender"))
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
-    /** 본문 */
     @Lob
-    @Column(nullable = false)
+    @Column(name = "message_content", columnDefinition = "TEXT")
+    private String messageContent;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "thread_id", nullable = false)
+    private MessageThread thread;
+
+    // 추가 필드들 (기존 서비스 코드와 호환성을 위해)
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
-    /** 소프트 삭제 (true면 화면 노출 제한/대체 문구 처리) */
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean deleted = false;
+    @Column(name = "deleted")
+    private Boolean deleted;
 
-    /* ==========================
-       연관관계 편의 메서드
-       ========================== */
-
-    public void setThread(MessageThread thread) {
-        this.thread = thread;
-    }
-
-    public void setSender(User sender) {
-        this.sender = sender;
-    }
-
-    /* ==========================
-       도메인 메서드
-       ========================== */
-
-    /** 내용 수정 */
+    // 도메인 메서드들
     public void edit(String newContent) {
         if (newContent != null && !newContent.isBlank()) {
+            this.messageContent = newContent;
             this.content = newContent;
         }
     }
 
-    /** 소프트 삭제 */
     public void softDelete() {
         this.deleted = true;
-        // 필요 시 마스킹:
-        // this.content = "[삭제된 메시지입니다]";
     }
 
-    /**
-     * 스레드 ID 조회
-     */
+    // 호환성 메서드들
+    public String getContent() {
+        return this.content != null ? this.content : this.messageContent;
+    }
+
+    public boolean isDeleted() {
+        return this.deleted != null ? this.deleted : false;
+    }
+
     public Long getThreadId() {
-        return thread != null ? thread.getId() : null;
+        return this.thread != null ? this.thread.getId() : null;
     }
 
-    /**
-     * 발신자 ID 조회
-     */
     public Long getSenderId() {
-        return sender != null ? sender.getId() : null;
+        return this.sender != null ? this.sender.getId() : null;
     }
 }

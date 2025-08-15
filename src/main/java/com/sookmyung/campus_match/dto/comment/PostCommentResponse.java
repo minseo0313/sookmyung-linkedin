@@ -23,10 +23,10 @@ public class PostCommentResponse {
     private Long postId;
 
     @Schema(description = "작성자 ID", example = "5")
-    private Long authorId;
+    private Long userId;
 
     @Schema(description = "댓글 내용", example = "저도 참여하고 싶습니다!")
-    private String content;
+    private String commentContent;
 
     @Schema(description = "삭제 여부", example = "false")
     private boolean deleted;
@@ -39,8 +39,8 @@ public class PostCommentResponse {
         return PostCommentResponse.builder()
                 .id(comment.getId())
                 .postId(comment.getPostId())
-                .authorId(comment.getAuthorId())
-                .content(comment.getContent())
+                .userId(comment.getUserId())
+                .commentContent(comment.getCommentContent())
                 .deleted(comment.isDeleted())
                 .createdAt(comment.getCreatedAt())
                 .build();

@@ -14,7 +14,7 @@ import lombok.*;
         name = "post_comments",
         indexes = {
                 @Index(name = "idx_post_comments_post_id", columnList = "post_id"),
-                @Index(name = "idx_post_comments_author_id", columnList = "author_id"),
+                @Index(name = "idx_post_comments_user_id", columnList = "user_id"),
                 @Index(name = "idx_post_comments_created", columnList = "created_at")
         }
 )
@@ -28,14 +28,14 @@ public class PostComment extends BaseEntity {
 
     /** 작성자 */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "author_id", nullable = false,
+    @JoinColumn(name = "user_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_post_comments_user"))
-    private User author;
+    private User user;
 
     /** 댓글 본문 */
     @Lob
-    @Column(nullable = false)
-    private String content;
+    @Column(name = "comment_content", nullable = false, columnDefinition = "TEXT")
+    private String commentContent;
 
     /** 소프트 삭제 플래그 (true면 화면 노출 제한/대체 문구 처리) */
     @Column(nullable = false)
@@ -55,8 +55,8 @@ public class PostComment extends BaseEntity {
         this.post = post;
     }
 
-    public void setAuthor(User author) {
-        this.author = author;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     /* ==========================
@@ -66,7 +66,7 @@ public class PostComment extends BaseEntity {
     /** 내용 수정 */
     public void edit(String newContent) {
         if (newContent != null && !newContent.isBlank()) {
-            this.content = newContent;
+            this.commentContent = newContent;
         }
     }
 
@@ -87,7 +87,11 @@ public class PostComment extends BaseEntity {
     /**
      * 작성자 ID 조회
      */
-    public Long getAuthorId() {
-        return author != null ? author.getId() : null;
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
+    }
+
+    public String getCommentContent() {
+        return commentContent;
     }
 }

@@ -5,6 +5,7 @@ import com.sookmyung.campus_match.domain.post.PostCategory;
 import com.sookmyung.campus_match.domain.post.PostLike;
 import com.sookmyung.campus_match.domain.post.PostApplication;
 import com.sookmyung.campus_match.domain.user.User;
+import com.sookmyung.campus_match.domain.common.enums.ApplicationStatus;
 import com.sookmyung.campus_match.dto.post.PostCreateRequest;
 import com.sookmyung.campus_match.dto.post.PostUpdateRequest;
 import com.sookmyung.campus_match.dto.like.PostLikeCountResponse;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -220,10 +222,10 @@ public class PostService {
         Post post = Post.builder()
                 .author(author)
                 .category(category)
-                .title(request.getTitle())
-                .content(request.getContent())
+                .postTitle(request.getTitle())
+                .postContent(request.getContent())
                 .recruitCount(request.getRecruitCount())
-                .requiredRoles(request.getRequiredRoles())
+                .requiredRoles(String.join(",", request.getRequiredRoles()))
                 .duration(request.getDuration())
                 .link(request.getLink())
                 .imageUrl(request.getImageUrl())
@@ -308,14 +310,16 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
 
         // 이미 지원했는지 확인
-        if (postApplicationRepository.existsByPostAndApplicant(post, user)) {
+        if (postApplicationRepository.existsByPostAndApplicant_Id(post, user.getId())) {
             throw new IllegalArgumentException("이미 지원한 게시글입니다.");
         }
 
         PostApplication application = PostApplication.builder()
                 .post(post)
                 .applicant(user)
-                .message(request.getMessage())
+                .applicationText(request.getMessage())
+                .applicationStatus(ApplicationStatus.PENDING)
+                .submittedAt(LocalDateTime.now())
                 .build();
 
         PostApplication savedApplication = postApplicationRepository.save(application);
@@ -353,7 +357,7 @@ public class PostService {
             throw new IllegalArgumentException("게시글 작성자만 지원을 수락할 수 있습니다.");
         }
 
-        PostApplication application = postApplicationRepository.findByPostAndApplicantId(post, applicantId)
+        PostApplication application = postApplicationRepository.findByPostAndApplicant_Id(post, applicantId)
                 .orElseThrow(() -> new IllegalArgumentException("지원 내역을 찾을 수 없습니다."));
 
         application.accept();
@@ -373,7 +377,7 @@ public class PostService {
             throw new IllegalArgumentException("게시글 작성자만 지원을 거절할 수 있습니다.");
         }
 
-        PostApplication application = postApplicationRepository.findByPostAndApplicantId(post, applicantId)
+        PostApplication application = postApplicationRepository.findByPostAndApplicant_Id(post, applicantId)
                 .orElseThrow(() -> new IllegalArgumentException("지원 내역을 찾을 수 없습니다."));
 
         application.reject();

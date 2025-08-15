@@ -2,7 +2,7 @@ package com.sookmyung.campus_match.dto.application;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sookmyung.campus_match.domain.post.PostApplication;
-import com.sookmyung.campus_match.domain.post.enum_.ApplicationStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApplicationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 

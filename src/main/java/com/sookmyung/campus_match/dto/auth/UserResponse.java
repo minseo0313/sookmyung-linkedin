@@ -2,7 +2,7 @@ package com.sookmyung.campus_match.dto.auth;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sookmyung.campus_match.domain.user.User;
-import com.sookmyung.campus_match.domain.user.enum_.ApprovalStatus;
+import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 

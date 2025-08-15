@@ -4,47 +4,65 @@ import com.sookmyung.campus_match.domain.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-/**
- * 시스템 공지 엔티티
- * - 관리자(Admin)가 등록하는 전체 공지사항
- */
-@Getter
-@Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "system_notices")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class SystemNotice extends BaseEntity {
 
-    /** 작성자 (관리자) */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "admin_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_system_notices_admin"))
-    private Admin admin;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private Admin createdBy;
 
-    @Column(nullable = false, length = 200)
-    private String title; // 공지 제목
+    @Column(name = "notice_title", nullable = false, length = 255)
+    private String noticeTitle;
 
     @Lob
-    @Column(nullable = false)
-    private String content; // 공지 내용
+    @Column(name = "notice_content", columnDefinition = "TEXT")
+    private String noticeContent;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean isActive = true; // 공지 활성 여부 (삭제 대신 비활성 처리 가능)
+    @Column(name = "visible_from")
+    private LocalDateTime visibleFrom;
 
-    /**
-     * 작성자 이름 조회
-     */
-    public String getAdminName() {
-        return admin != null ? admin.getName() : null;
+    @Column(name = "visible_to")
+    private LocalDateTime visibleTo;
+
+    // 추가 필드들 (기존 서비스 코드와 호환성을 위해)
+    @Column(name = "title", length = 255)
+    private String title;
+
+    @Column(name = "content", columnDefinition = "TEXT")
+    private String content;
+
+    @Column(name = "is_active")
+    private Boolean isActive;
+
+    @Column(name = "admin_id")
+    private Long adminId;
+
+    // 호환성 메서드들
+    public String getTitle() {
+        return this.title != null ? this.title : this.noticeTitle;
     }
 
-    /**
-     * 작성자 계정명 조회
-     */
+    public String getContent() {
+        return this.content != null ? this.content : this.noticeContent;
+    }
+
+    public boolean isActive() {
+        return this.isActive != null ? this.isActive : true;
+    }
+
+    public String getAdminName() {
+        return this.createdBy != null ? this.createdBy.getAdminName() : null;
+    }
+
     public String getAdminUsername() {
-        return admin != null ? admin.getUsername() : null;
+        return this.createdBy != null ? this.createdBy.getAdminName() : null;
     }
 }

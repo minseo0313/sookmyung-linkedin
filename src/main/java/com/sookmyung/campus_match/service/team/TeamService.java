@@ -2,7 +2,7 @@ package com.sookmyung.campus_match.service.team;
 
 import com.sookmyung.campus_match.domain.team.Team;
 import com.sookmyung.campus_match.domain.team.TeamMember;
-import com.sookmyung.campus_match.domain.team.enum_.MemberRole;
+import com.sookmyung.campus_match.domain.common.enums.MemberRole;
 import com.sookmyung.campus_match.domain.user.User;
 import com.sookmyung.campus_match.dto.team.TeamAcceptRequest;
 import com.sookmyung.campus_match.dto.team.TeamMemberResponse;
@@ -43,7 +43,7 @@ public class TeamService {
         // - 팀 상태 업데이트
         // - 팀 비서 캘린더 자동 생성
 
-        log.info("팀 매칭 확정: 팀 ID {}, 사용자 {}", teamId, username);
+        // TODO: 팀 매칭 확정 로직 구현 필요
 
         return TeamResponse.from(team);
     }

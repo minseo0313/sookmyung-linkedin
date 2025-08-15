@@ -5,68 +5,38 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface MessageThreadRepository extends JpaRepository<MessageThread, Long> {
 
-    // 특정 유저가 참여 중인 스레드 목록 (최근 메시지순)
-    @Query("""
-           select t
-             from MessageThread t
-            where t.participantA.id = :userId
-               or t.participantB.id = :userId
-            order by t.lastMessageAt desc, t.id desc
-           """)
-    Page<MessageThread> findAllForUserOrderByLastMessageAtDesc(Long userId, Pageable pageable);
+    // 중첩 속성 표기를 사용한 메서드들 (OR 조건은 2개 인자 필요)
+    List<MessageThread> findByUser1_IdOrUser2_Id(Long user1Id, Long user2Id);
+    
+    Optional<MessageThread> findByUser1_IdAndUser2_Id(Long user1Id, Long user2Id);
+    
+    Page<MessageThread> findByUser1_IdOrUser2_Id(Long user1Id, Long user2Id, Pageable pageable);
+    
+    // 정렬이 포함된 OR 조건 메서드들
+    List<MessageThread> findByUser1_IdOrUser2_IdOrderByUpdatedAtDesc(Long user1Id, Long user2Id);
+    
+    List<MessageThread> findByStartedFromTypeAndStartedFromId(String startedFromType, Long startedFromId);
 
-    // 두 사용자 간 스레드 단건 조회(순서 무관)
-    @Query("""
-           select t
-             from MessageThread t
-            where (t.participantA.id = :userId1 and t.participantB.id = :userId2)
-               or (t.participantA.id = :userId2 and t.participantB.id = :userId1)
-           """)
-    Optional<MessageThread> findBetweenUsers(Long userId1, Long userId2);
-
-    // 두 사용자 간 스레드 존재 여부(순서 무관)
-    @Query("""
-           select (count(t) > 0)
-             from MessageThread t
-            where (t.participantA.id = :userId1 and t.participantB.id = :userId2)
-               or (t.participantA.id = :userId2 and t.participantB.id = :userId1)
-           """)
-    boolean existsBetweenUsers(Long userId1, Long userId2);
-
-    // 스레드 단건 조회(권한 체크용: 해당 유저가 참여중인지 함께 확인)
-    @Query("""
-           select t
-             from MessageThread t
-            where t.id = :threadId
-              and (t.participantA.id = :userId or t.participantB.id = :userId)
-           """)
-    Optional<MessageThread> findByIdAndParticipant(Long threadId, Long userId);
-
-    // 내가 참여 중인 스레드 수
-    long countByParticipantA_IdOrParticipantB_Id(Long userIdA, Long userIdB);
-
-    // 두 사용자 간 스레드 단건 조회 (MessageService에서 사용)
-    @Query("""
-           select t
-             from MessageThread t
-            where (t.participantA.id = :userId1 and t.participantB.id = :userId2)
-               or (t.participantA.id = :userId2 and t.participantB.id = :userId1)
-           """)
-    Optional<MessageThread> findByParticipants(Long userId1, Long userId2);
-
-    // 특정 사용자가 참여 중인 스레드 목록 (MessageService에서 사용)
-    @Query("""
-           select t
-             from MessageThread t
-            where t.participantA.id = :userId
-               or t.participantB.id = :userId
-            order by t.lastMessageAt desc, t.id desc
-           """)
-    List<MessageThread> findByParticipant(Long userId);
+    // 추가 메서드들 (기존 서비스 코드와 호환성을 위해)
+    @Query("SELECT mt FROM MessageThread mt WHERE " +
+           "(mt.user1.id = :userId OR mt.user2.id = :userId)")
+    List<MessageThread> findByParticipant(@Param("userId") Long userId);
+    
+    @Query("SELECT mt FROM MessageThread mt WHERE " +
+           "(mt.user1.id = :userId1 OR mt.user2.id = :userId1) AND " +
+           "(mt.user1.id = :userId2 OR mt.user2.id = :userId2)")
+    Optional<MessageThread> findByParticipants(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
+    
+    @Query("SELECT mt FROM MessageThread mt WHERE " +
+           "(mt.user1.id = :userId OR mt.user2.id = :userId) ORDER BY mt.updatedAt DESC")
+    Page<MessageThread> findAllForUserOrderByLastMessageAtDesc(@Param("userId") Long userId, Pageable pageable);
 }
