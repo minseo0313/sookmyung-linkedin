@@ -1,11 +1,14 @@
 package com.sookmyung.campus_match.domain.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sookmyung.campus_match.domain.common.BaseEntity;
 import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import jakarta.persistence.*;
+import jakarta.persistence.PrePersist;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -14,6 +17,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = {"passwordHash"})
 public class User extends BaseEntity {
 
     @Column(name = "student_id", unique = true, nullable = false, length = 255)
@@ -34,12 +38,21 @@ public class User extends BaseEntity {
     @Column(name = "email", unique = true, nullable = false, length = 255)
     private String email;
 
-    @Column(name = "password", nullable = false, length = 255)
-    private String password;
+    @JsonIgnore
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status", nullable = false)
-    private ApprovalStatus approvalStatus;
+    @Builder.Default
+    private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
 
     // 추가 필드들 (기존 서비스 코드와 호환성을 위해)
     @Column(name = "username", length = 255)
@@ -54,11 +67,18 @@ public class User extends BaseEntity {
     @Column(name = "phone", length = 255)
     private String phone;
 
-    @Column(name = "operator")
-    private Boolean operator;
+    @Column(name = "operator", nullable = false)
+    @Builder.Default
+    private Boolean operator = false;
 
-    @Column(name = "report_count")
-    private Integer reportCount;
+    @Column(name = "report_count", nullable = false, columnDefinition = "int default 0")
+    @Builder.Default
+    private Integer reportCount = 0;
+
+    @PrePersist
+    void prePersist() {
+        if (reportCount == null) reportCount = 0;
+    }
 
     // 추가 관계들 (기존 서비스 코드와 호환성을 위해)
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
@@ -97,27 +117,35 @@ public class User extends BaseEntity {
         return this.operator != null && this.operator;
     }
 
-    public void increaseReportCount(int by) {
-        if (by <= 0) return;
-        this.reportCount = (this.reportCount == null ? by : this.reportCount + by);
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
     }
 
-    public int getReportCount() {
-        return this.reportCount != null ? this.reportCount : 0;
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public void increaseReportCount(int by) {
+        if (by <= 0) return;
+        this.reportCount += by;
+    }
+
+    public Integer getReportCount() {
+        return this.reportCount;
     }
 
     public void changePasswordHash(String encodedPassword) {
-        this.password = encodedPassword;
+        this.passwordHash = encodedPassword;
     }
 
     public String getPasswordHash() {
-        return this.password;
+        return this.passwordHash;
     }
 
     // 빌더 메서드 추가
     public static class UserBuilder {
         public UserBuilder passwordHash(String passwordHash) {
-            this.password = passwordHash;
+            this.passwordHash = passwordHash;
             return this;
         }
     }
@@ -128,6 +156,10 @@ public class User extends BaseEntity {
 
     public String getFullName() {
         return this.fullName != null ? this.fullName : this.name;
+    }
+
+    public String getName() {
+        return this.name != null ? this.name : this.fullName;
     }
 
     public String getSookmyungEmail() {

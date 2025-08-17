@@ -35,7 +35,7 @@ public class PostCommentService {
      * - 학생 B: 모든 댓글 읽기 가능
      */
     public List<PostCommentResponse> getCommentsForPost(Long postId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         List<PostComment> comments = postCommentRepository.findByPost_IdOrderByCreatedAtAsc(postId);
@@ -58,7 +58,7 @@ public class PostCommentService {
      */
     @Transactional
     public PostCommentResponse createComment(PostCommentCreateRequest request, Long postId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         // 승인되지 않은 사용자는 댓글 작성 불가
@@ -130,7 +130,7 @@ public class PostCommentService {
      * 사용자의 댓글 목록 조회
      */
     public Page<PostCommentResponse> getUserComments(String username, Pageable pageable) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         Page<PostComment> comments = postCommentRepository.findByUser_IdOrderByCreatedAtDesc(user.getId(), pageable);

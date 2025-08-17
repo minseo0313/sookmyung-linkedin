@@ -1,6 +1,7 @@
 package com.sookmyung.campus_match.domain.post;
 
 import com.sookmyung.campus_match.domain.common.BaseEntity;
+import com.sookmyung.campus_match.domain.common.enums.PostCategory;
 import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,8 +15,8 @@ import lombok.*;
 @Builder
 public class Post extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false)
     private PostCategory category;
 
     @Column(name = "post_title", nullable = false, length = 255)
@@ -52,6 +53,10 @@ public class Post extends BaseEntity {
     @Column(name = "comment_count")
     private Integer commentCount;
 
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
@@ -59,6 +64,13 @@ public class Post extends BaseEntity {
     // 추가 필드들 (기존 서비스 코드와 호환성을 위해)
     @Column(name = "matched_team_id")
     private Long matchedTeamId;
+
+    // SearchService에서 호출하는 필드들
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "content")
+    private String content;
 
     // TODO: DB 마이그레이션 시 제거할 필드들
     // @Column(name = "user_id") - author_id와 중복, author_id만 사용
@@ -115,11 +127,11 @@ public class Post extends BaseEntity {
     }
 
     public String getTitle() {
-        return this.postTitle;
+        return this.title != null ? this.title : this.postTitle;
     }
 
     public String getContent() {
-        return this.postContent;
+        return this.content != null ? this.content : this.postContent;
     }
 
     public Long getViews() {
@@ -134,8 +146,8 @@ public class Post extends BaseEntity {
         return this.author != null ? this.author.getId() : null;
     }
 
-    public Long getCategoryId() {
-        return this.category != null ? this.category.getId() : null;
+    public String getCategoryName() {
+        return this.category != null ? this.category.getDescription() : null;
     }
 
     public Integer getRecruitCount() {
@@ -155,6 +167,18 @@ public class Post extends BaseEntity {
 
         public PostBuilder link(String link) {
             this.linkUrl = link;
+            return this;
+        }
+
+        public PostBuilder title(String title) {
+            this.title = title;
+            this.postTitle = title;
+            return this;
+        }
+
+        public PostBuilder content(String content) {
+            this.content = content;
+            this.postContent = content;
             return this;
         }
     }

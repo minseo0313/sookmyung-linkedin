@@ -26,6 +26,12 @@ public class TeamScheduleRequest {
     @Schema(description = "종료 일시", example = "2025-08-15T12:00:00", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime endAt;
 
+    @Schema(description = "시작 시간", example = "2025-08-15T10:00:00")
+    private LocalDateTime startTime;
+
+    @Schema(description = "종료 시간", example = "2025-08-15T12:00:00")
+    private LocalDateTime endTime;
+
     @Schema(description = "하루 종일 여부", example = "false")
     private boolean allDay;
 

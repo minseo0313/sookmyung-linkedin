@@ -1,47 +1,45 @@
 package com.sookmyung.campus_match.dto.post;
 
+import com.sookmyung.campus_match.domain.common.enums.PostCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
-import java.util.List;
-
-/**
- * 게시글 수정 요청 DTO.
- * - 모든 필드는 선택, null이 아닌 값만 수정
- */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Schema(description = "게시글 수정 요청")
 public class PostUpdateRequest {
 
-    @Schema(description = "게시글 제목", example = "백엔드 개발자 모집 - 수정")
-    @Size(max = 200)
+    @NotBlank(message = "제목은 필수입니다")
+    @Size(min = 1, max = 200, message = "제목은 1자 이상 200자 이하여야 합니다")
+    @Schema(description = "제목", example = "프로젝트 팀원 모집합니다")
     private String title;
 
-    @Schema(description = "카테고리 ID", example = "3")
-    private Long categoryId;
+    @NotNull(message = "카테고리는 필수입니다")
+    @Schema(description = "카테고리", example = "PROJECT")
+    private PostCategory category;
 
-    @Schema(description = "게시글 내용", example = "Spring Boot 프로젝트 경험자 우대.")
-    @Size(max = 8000)
+    @NotBlank(message = "내용은 필수입니다")
+    @Size(min = 10, max = 5000, message = "내용은 10자 이상 5000자 이하여야 합니다")
+    @Schema(description = "내용", example = "웹 개발 프로젝트 팀원을 모집합니다...")
     private String content;
 
-    @Schema(description = "모집 인원 수", example = "4")
-    private Integer recruitCount;
+    @Size(max = 200, message = "필요 역할은 200자 이하여야 합니다")
+    @Schema(description = "필요 역할", example = "프론트엔드 개발자 2명, 백엔드 개발자 1명")
+    private String requiredRoles;
 
-    @Schema(description = "요구 역할 목록", example = "[\"백엔드\", \"프론트엔드\"]")
-    private List<@Size(max = 60) String> requiredRoles;
+    @Min(value = 1, message = "모집 인원은 1명 이상이어야 합니다")
+    @Max(value = 20, message = "모집 인원은 20명 이하여야 합니다")
+    @Schema(description = "모집 인원", example = "3")
+    private Integer recruitmentCount;
 
-    @Schema(description = "기간", example = "3주")
-    @Size(max = 60)
+    @Size(max = 100, message = "기간은 100자 이하여야 합니다")
+    @Schema(description = "기간", example = "3개월")
     private String duration;
 
-    @Schema(description = "외부 링크", example = "https://example.com")
-    @Size(max = 500)
-    private String link;
-
-    @Schema(description = "이미지 URL", example = "https://example.com/image.jpg")
-    @Size(max = 500)
-    private String imageUrl;
+    @Size(max = 500, message = "링크 URL은 500자 이하여야 합니다")
+    @Schema(description = "링크 URL", example = "https://github.com/project")
+    private String linkUrl;
 }

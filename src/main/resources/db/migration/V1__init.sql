@@ -12,6 +12,7 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     approval_status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL,
+    operator BOOLEAN DEFAULT FALSE,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL
 );

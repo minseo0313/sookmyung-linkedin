@@ -26,4 +26,8 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     Page<Team> search(@Param("createdById") Long createdById,
                        @Param("createdFrom") CreatedFrom createdFrom,
                        Pageable pageable);
+
+    // TeamService에서 호출하는 메서드들
+    @Query("SELECT t FROM Team t JOIN t.members tm WHERE tm.user.id = :userId")
+    List<Team> findByMembers_User_Id(@Param("userId") Long userId);
 }

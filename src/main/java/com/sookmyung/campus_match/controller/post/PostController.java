@@ -1,7 +1,9 @@
 package com.sookmyung.campus_match.controller.post;
 
 import com.sookmyung.campus_match.domain.post.Post;
+import com.sookmyung.campus_match.domain.user.User;
 import com.sookmyung.campus_match.dto.common.ApiResponse;
+import com.sookmyung.campus_match.repository.user.UserRepository;
 import com.sookmyung.campus_match.dto.post.PostContentSuggestionRequest;
 import com.sookmyung.campus_match.dto.post.PostContentSuggestionResponse;
 import com.sookmyung.campus_match.dto.post.PostCreateRequest;
@@ -14,6 +16,7 @@ import com.sookmyung.campus_match.dto.application.PostApplicationResponse;
 import com.sookmyung.campus_match.service.post.PostService;
 import com.sookmyung.campus_match.util.security.RequiresApproval;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,6 +36,7 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final UserRepository userRepository;
 
     @Operation(summary = "AI 게시글 작성 도움", description = "입력값을 기반으로 게시글 내용을 추천합니다.")
     @PostMapping("/suggest-content")
@@ -62,10 +66,11 @@ public class PostController {
             @Valid @RequestBody PostCreateRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        // TODO: UserDetails에서 userId 추출 로직 구현 필요
-        Long authorId = 1L; // 임시로 하드코딩
+        // UserDetails에서 userId 추출 (학번으로 사용자 조회)
+        User user = userRepository.findByStudentId(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         
-        Post post = postService.createPost(request, authorId);
+        Post post = postService.createPost(request, user.getId());
         PostDetailResponse response = PostDetailResponse.from(post);
         
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -99,18 +104,24 @@ public class PostController {
 
     @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이징하여 조회합니다.")
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<PostSummaryResponse>>> getPosts(Pageable pageable) {
-        // TODO: 실제 게시글 목록 조회 로직 구현 필요
-        Page<PostSummaryResponse> posts = Page.empty(pageable);
+    public ResponseEntity<ApiResponse<Page<PostSummaryResponse>>> getPosts(
+            @Parameter(description = "페이징 정보", example = "page=0&size=10&sort=createdAt,desc")
+            Pageable pageable) {
         
-        return ResponseEntity.ok(ApiResponse.success(posts));
+        Page<Post> posts = postService.getPosts(pageable);
+        Page<PostSummaryResponse> response = posts.map(PostSummaryResponse::from);
+        
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
     @DeleteMapping("/{postId}")
     @RequiresApproval(message = "승인된 사용자만 게시글을 삭제할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> deletePost(@PathVariable Long postId) {
-        // TODO: 게시글 삭제 로직 구현 필요
+    public ResponseEntity<ApiResponse<String>> deletePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        postService.deletePost(postId, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success("게시글이 삭제되었습니다."));
     }
 
@@ -126,8 +137,10 @@ public class PostController {
     }
 
     @Operation(summary = "게시글 좋아요 수 조회", description = "게시글의 좋아요 개수를 조회합니다.")
-    @GetMapping("/{postId}/like-count")
-    public ResponseEntity<ApiResponse<PostLikeCountResponse>> getLikeCount(@PathVariable Long postId) {
+    @GetMapping("/{postId}/likes/count")
+    public ResponseEntity<ApiResponse<PostLikeCountResponse>> getLikeCount(
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId) {
         PostLikeCountResponse likeCount = postService.getLikeCount(postId);
         return ResponseEntity.ok(ApiResponse.success(likeCount));
     }

@@ -1,21 +1,23 @@
 package com.sookmyung.campus_match.dto.message;
 
+import com.sookmyung.campus_match.domain.common.enums.MessageReportReason;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
-/**
- * 메시지 신고 요청 DTO
- * - 특정 메시지에 대한 신고 사유를 전달
- */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Schema(description = "메시지 신고 요청")
 public class MessageReportRequest {
 
-    @Schema(description = "신고할 메시지 ID", example = "42", requiredMode = Schema.RequiredMode.REQUIRED)
-    private Long messageId;
+    @NotNull(message = "신고 사유는 필수입니다")
+    @Schema(description = "신고 사유", example = "SPAM")
+    private MessageReportReason reason;
 
-    @Schema(description = "신고 사유", example = "욕설 및 비방 메시지", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String reason;
+    @Size(max = 500, message = "신고 상세 설명은 500자 이하여야 합니다")
+    @Schema(description = "신고 상세 설명", example = "스팸 메시지입니다.")
+    private String description;
 }

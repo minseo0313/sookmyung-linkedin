@@ -8,3 +8,8 @@ public enum InterestType {
     CUSTOM       // 사용자 정의 관심사
 }
 
+
+
+
+
+

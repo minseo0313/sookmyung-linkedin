@@ -2,6 +2,7 @@ package com.sookmyung.campus_match.dto.message;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sookmyung.campus_match.domain.message.MessageThread;
+import com.sookmyung.campus_match.domain.message.Message;
 import com.sookmyung.campus_match.domain.common.enums.StartedFromType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -56,6 +57,20 @@ public class MessageThreadResponse {
                 .startedFromId(thread.getStartedFromId())
                 .lastMessageAt(thread.getLastMessageAt())
                 .lastMessagePreview(thread.getLastMessagePreview())
+                .unreadCountA(thread.getUnreadCountA())
+                .unreadCountB(thread.getUnreadCountB())
+                .build();
+    }
+
+    public static MessageThreadResponse from(MessageThread thread, Message lastMessage) {
+        return MessageThreadResponse.builder()
+                .id(thread.getId())
+                .participantAId(thread.getParticipantAId())
+                .participantBId(thread.getParticipantBId())
+                .startedFromType(thread.getStartedFromType())
+                .startedFromId(thread.getStartedFromId())
+                .lastMessageAt(thread.getLastMessageAt())
+                .lastMessagePreview(lastMessage != null ? lastMessage.getContent() : thread.getLastMessagePreview())
                 .unreadCountA(thread.getUnreadCountA())
                 .unreadCountB(thread.getUnreadCountB())
                 .build();

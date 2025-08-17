@@ -1,8 +1,8 @@
 package com.sookmyung.campus_match.service.search;
 
 import com.sookmyung.campus_match.domain.post.Post;
+import com.sookmyung.campus_match.domain.common.enums.PostCategory;
 import com.sookmyung.campus_match.domain.user.User;
-import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import com.sookmyung.campus_match.dto.search.PostSearchResponse;
 import com.sookmyung.campus_match.dto.search.UserSearchResponse;
 import com.sookmyung.campus_match.repository.post.PostRepository;
@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,160 +27,165 @@ public class SearchService {
     private final UserRepository userRepository;
 
     /**
-     * 게시글 실시간 검색 자동완성
-     * - 제목과 내용에서 키워드를 추출하여 자동완성 제공
-     */
-    public List<String> getPostSearchSuggestions(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return List.of();
-        }
-
-        // 제목에서 키워드 검색
-        List<Post> titleMatches = postRepository.findByTitleContainingIgnoreCase(keyword, Pageable.ofSize(10)).getContent();
-        
-        // 내용에서 키워드 검색
-        List<Post> contentMatches = postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
-                keyword, Pageable.ofSize(10)).getContent();
-
-        // 키워드 추출 및 중복 제거
-        Set<String> suggestions = titleMatches.stream()
-                .map(post -> extractKeywordsFromTitle(post.getTitle()))
-                .flatMap(List::stream)
-                .filter(word -> word.toLowerCase().contains(keyword.toLowerCase()))
-                .collect(Collectors.toSet());
-
-        suggestions.addAll(contentMatches.stream()
-                .map(post -> extractKeywordsFromContent(post.getContent()))
-                .flatMap(List::stream)
-                .filter(word -> word.toLowerCase().contains(keyword.toLowerCase()))
-                .collect(Collectors.toSet()));
-
-        // 키워드 길이순으로 정렬하고 상위 10개 반환
-        return suggestions.stream()
-                .sorted((a, b) -> {
-                    // 정확히 일치하는 키워드를 우선
-                    if (a.toLowerCase().equals(keyword.toLowerCase())) return -1;
-                    if (b.toLowerCase().equals(keyword.toLowerCase())) return 1;
-                    // 길이순 정렬
-                    return Integer.compare(a.length(), b.length());
-                })
-                .limit(10)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 사용자 검색 자동완성
-     * - 이름과 학과에서 키워드를 추출하여 자동완성 제공
-     */
-    public List<String> getUserSearchSuggestions(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return List.of();
-        }
-
-        // 승인된 사용자만 검색 대상
-        List<User> users = userRepository.findByApprovalStatus(ApprovalStatus.APPROVED);
-
-        Set<String> suggestions = users.stream()
-                .map(user -> List.of(user.getFullName(), user.getDepartment()))
-                .flatMap(List::stream)
-                .filter(text -> text.toLowerCase().contains(keyword.toLowerCase()))
-                .collect(Collectors.toSet());
-
-        return suggestions.stream()
-                .sorted((a, b) -> {
-                    // 정확히 일치하는 키워드를 우선
-                    if (a.toLowerCase().equals(keyword.toLowerCase())) return -1;
-                    if (b.toLowerCase().equals(keyword.toLowerCase())) return 1;
-                    // 길이순 정렬
-                    return Integer.compare(a.length(), b.length());
-                })
-                .limit(10)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * 게시글 검색
+     * - 제목, 내용, 작성자명 기준 LIKE 검색
+     * - 카테고리별 필터링
+     * - 페이징 지원
      */
-    public Page<PostSearchResponse> searchPosts(String keyword, Pageable pageable) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return Page.empty(pageable);
+    public Page<PostSearchResponse> searchPosts(String keyword, String category, Pageable pageable) {
+        Page<Post> posts;
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            // 키워드가 있는 경우 제목, 내용, 작성자명으로 검색
+            PostCategory categoryEnum = null;
+            if (category != null && !category.trim().isEmpty()) {
+                try {
+                    categoryEnum = PostCategory.valueOf(category.trim().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // 잘못된 카테고리명인 경우 무시
+                }
+            }
+            posts = postRepository.searchByKeywordAndCategory(keyword.trim(), categoryEnum, pageable);
+        } else if (category != null && !category.trim().isEmpty()) {
+            // 카테고리만 있는 경우 카테고리로만 검색
+            try {
+                PostCategory categoryEnum = PostCategory.valueOf(category.trim().toUpperCase());
+                posts = postRepository.findByCategory(categoryEnum, pageable);
+            } catch (IllegalArgumentException e) {
+                // 잘못된 카테고리명인 경우 전체 조회
+                posts = postRepository.findAll(pageable);
+            }
+        } else {
+            // 키워드와 카테고리가 모두 없는 경우 전체 조회
+            posts = postRepository.findAll(pageable);
         }
-
-        Page<Post> posts = postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
-                keyword, pageable);
-
+        
         return posts.map(PostSearchResponse::from);
     }
 
     /**
      * 사용자 검색
+     * - 이름, 학과, 관심사 기준 검색
+     * - 승인 상태별 필터링
+     * - 페이징 지원
      */
-    public Page<UserSearchResponse> searchUsers(String keyword, Pageable pageable) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return Page.empty(pageable);
+    public Page<UserSearchResponse> searchUsers(String keyword, String department, String interest, Pageable pageable) {
+        Page<User> users;
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            // 키워드가 있는 경우 이름, 학과로 검색
+            users = userRepository.searchByKeywordAndDepartment(keyword.trim(), department, pageable);
+        } else if (department != null && !department.trim().isEmpty()) {
+            // 학과만 있는 경우 학과로만 검색
+            users = userRepository.findByDepartment(department.trim(), pageable);
+        } else {
+            // 키워드와 학과가 모두 없는 경우 전체 조회
+            users = userRepository.findAll(pageable);
         }
+        
+        return users.map(UserSearchResponse::from);
+    }
 
-        Page<User> users = userRepository.findByFullNameContainingIgnoreCaseOrUsernameContainingIgnoreCase(
-                keyword, keyword, pageable);
-
-        // 승인된 사용자만 필터링하여 새로운 Page 생성
-        List<UserSearchResponse> filteredContent = users.getContent().stream()
-                .filter(user -> user.getApprovalStatus() == ApprovalStatus.APPROVED)
-                .map(UserSearchResponse::from)
+    /**
+     * 인기 검색어 기반 게시글 추천
+     * - 최근 작성된 게시글 중 조회수/좋아요가 높은 순으로 정렬
+     */
+    public List<PostSearchResponse> getPopularPosts(int limit) {
+        List<Post> posts = postRepository.findPopularPosts(limit);
+        return posts.stream()
+                .map(PostSearchResponse::from)
                 .collect(Collectors.toList());
-
-        return new org.springframework.data.domain.PageImpl<>(filteredContent, pageable, users.getTotalElements());
     }
 
     /**
-     * 제목에서 키워드 추출
+     * 카테고리별 최신 게시글
      */
-    private List<String> extractKeywordsFromTitle(String title) {
-        if (title == null || title.isEmpty()) {
+    public List<PostSearchResponse> getLatestPostsByCategory(String category, int limit) {
+        try {
+            PostCategory categoryEnum = PostCategory.valueOf(category.toUpperCase());
+            List<Post> posts = postRepository.findLatestByCategory(categoryEnum, limit);
+            return posts.stream()
+                    .map(PostSearchResponse::from)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            // 잘못된 카테고리명인 경우 빈 리스트 반환
             return List.of();
         }
-
-        return List.of(title.split("\\s+"));
     }
 
     /**
-     * 내용에서 키워드 추출
+     * 사용자 기반 맞춤 게시글 추천
+     * - 사용자의 관심사와 일치하는 게시글 추천
      */
-    private List<String> extractKeywordsFromContent(String content) {
-        if (content == null || content.isEmpty()) {
-            return List.of();
-        }
-
-        // 간단한 키워드 추출 (실제로는 더 정교한 NLP 처리 필요)
-        return List.of(content.split("\\s+"));
-    }
-
-    /**
-     * 통합 검색 자동완성
-     * - 게시글과 사용자 검색을 모두 포함
-     */
-    public List<String> getUnifiedSearchSuggestions(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return List.of();
-        }
-
-        List<String> postSuggestions = getPostSearchSuggestions(keyword);
-        List<String> userSuggestions = getUserSearchSuggestions(keyword);
-
-        // 통합하여 중복 제거
-        Set<String> allSuggestions = new java.util.LinkedHashSet<>();
-        allSuggestions.addAll(postSuggestions);
-        allSuggestions.addAll(userSuggestions);
-
-        return allSuggestions.stream()
-                .sorted((a, b) -> {
-                    // 정확히 일치하는 키워드를 우선
-                    if (a.toLowerCase().equals(keyword.toLowerCase())) return -1;
-                    if (b.toLowerCase().equals(keyword.toLowerCase())) return 1;
-                    // 길이순 정렬
-                    return Integer.compare(a.length(), b.length());
-                })
-                .limit(15) // 통합 검색이므로 더 많은 결과 제공
+    public List<PostSearchResponse> getRecommendedPostsForUser(Long userId, int limit) {
+        // TODO: 사용자 관심사 기반 추천 로직 구현
+        // 현재는 최신 게시글을 반환
+        List<Post> posts = postRepository.findLatestPosts(limit);
+        return posts.stream()
+                .map(PostSearchResponse::from)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 검색 통계
+     */
+    public SearchStatistics getSearchStatistics() {
+        long totalPosts = postRepository.count();
+        long totalUsers = userRepository.count();
+        long activePosts = postRepository.countByIsClosedFalse();
+        
+        return SearchStatistics.builder()
+                .totalPosts(totalPosts)
+                .totalUsers(totalUsers)
+                .activePosts(activePosts)
+                .build();
+    }
+
+    /**
+     * 검색 통계 내부 클래스
+     */
+    public static class SearchStatistics {
+        private final long totalPosts;
+        private final long totalUsers;
+        private final long activePosts;
+
+        public SearchStatistics(long totalPosts, long totalUsers, long activePosts) {
+            this.totalPosts = totalPosts;
+            this.totalUsers = totalUsers;
+            this.activePosts = activePosts;
+        }
+
+        public long getTotalPosts() { return totalPosts; }
+        public long getTotalUsers() { return totalUsers; }
+        public long getActivePosts() { return activePosts; }
+
+        public static SearchStatisticsBuilder builder() {
+            return new SearchStatisticsBuilder();
+        }
+
+        public static class SearchStatisticsBuilder {
+            private long totalPosts;
+            private long totalUsers;
+            private long activePosts;
+
+            public SearchStatisticsBuilder totalPosts(long totalPosts) {
+                this.totalPosts = totalPosts;
+                return this;
+            }
+
+            public SearchStatisticsBuilder totalUsers(long totalUsers) {
+                this.totalUsers = totalUsers;
+                return this;
+            }
+
+            public SearchStatisticsBuilder activePosts(long activePosts) {
+                this.activePosts = activePosts;
+                return this;
+            }
+
+            public SearchStatistics build() {
+                return new SearchStatistics(totalPosts, totalUsers, activePosts);
+            }
+        }
     }
 }

@@ -8,3 +8,8 @@ public enum StartedFromType {
     POST      // 게시글에서 시작
 }
 
+
+
+
+
+

@@ -8,3 +8,8 @@ public enum MemberRole {
     MEMBER   // 팀원
 }
 
+
+
+
+
+

@@ -1,35 +1,29 @@
 package com.sookmyung.campus_match.dto.message;
 
-import com.sookmyung.campus_match.domain.common.enums.StartedFromType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-/**
- * 첫 메시지 전송 요청 DTO.
- * - 프로필(인사하기) 또는 게시글(문의하기)에서 시작
- */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Schema(description = "메시지 전송 요청")
 public class MessageSendRequest {
 
-    @Schema(description = "수신자 ID", example = "8")
-    @NotNull
-    private Long recipientId;
+    @NotNull(message = "수신자 ID는 필수입니다")
+    @Schema(description = "수신자 ID", example = "1")
+    private Long receiverId;
 
-    @Schema(description = "메시지 시작 경로 타입", example = "PROFILE")
-    @NotNull
-    private StartedFromType startedFromType;
+    @NotBlank(message = "메시지 제목은 필수입니다")
+    @Size(min = 1, max = 100, message = "제목은 1자 이상 100자 이하여야 합니다")
+    @Schema(description = "메시지 제목", example = "프로젝트 협업 제안")
+    private String title;
 
-    @Schema(description = "메시지 시작 경로 ID (PROFILE.id 또는 POST.id)", example = "3")
-    private Long startedFromId;
-
-    @Schema(description = "메시지 내용", example = "안녕하세요! 함께 프로젝트 하고 싶어요.")
-    @NotBlank
-    @Size(max = 4000)
+    @NotBlank(message = "메시지 내용은 필수입니다")
+    @Size(min = 1, max = 1000, message = "내용은 1자 이상 1000자 이하여야 합니다")
+    @Schema(description = "메시지 내용", example = "안녕하세요! 프로젝트에 함께 참여하실 분을 찾고 있습니다.")
     private String content;
 }

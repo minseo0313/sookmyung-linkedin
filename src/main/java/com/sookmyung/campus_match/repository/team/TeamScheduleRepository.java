@@ -31,4 +31,8 @@ public interface TeamScheduleRepository extends JpaRepository<TeamSchedule, Long
 
     // 추가 메서드들 (기존 서비스 코드와 호환성을 위해)
     List<TeamSchedule> findByTeam(Team team);
+
+    // TeamService에서 호출하는 메서드들
+    @Query("SELECT ts FROM TeamSchedule ts WHERE ts.team.id = :teamId ORDER BY ts.startTime ASC")
+    List<TeamSchedule> findByTeam_IdOrderByStartTimeAsc(@Param("teamId") Long teamId);
 }

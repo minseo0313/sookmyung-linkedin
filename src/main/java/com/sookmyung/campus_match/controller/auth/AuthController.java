@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Tag(name = "인증", description = "사용자 인증 관련 API")
 @RestController
@@ -26,13 +27,55 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @Operation(summary = "회원 가입", description = "새로운 사용자를 등록합니다.")
+    @Operation(
+        summary = "회원 가입", 
+        description = "새로운 사용자를 등록합니다. 권한성 필드(role, approvalStatus, operator)는 서버에서 기본값으로 설정됩니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "201", 
+                description = "회원가입 성공 - 사용자가 생성되었습니다",
+                content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ApiResponse.class)
+                )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400", 
+                description = "입력값 검증 실패 - 필드별 오류 정보가 포함됩니다",
+                content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ApiResponse.class)
+                )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "409", 
+                description = "중복 데이터 - 이미 존재하는 이메일 또는 학번",
+                content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ApiResponse.class)
+                )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "500", 
+                description = "서버 내부 오류 - 시스템 오류가 발생했습니다",
+                content = @io.swagger.v3.oas.annotations.media.Content(
+                    mediaType = "application/json",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ApiResponse.class)
+                )
+            )
+        }
+    )
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserResponse>> register(
             @Valid @RequestBody UserRegisterRequest request) {
         
         UserResponse user = authService.register(request);
-        return ResponseEntity.ok(ApiResponse.success(user));
+        return ResponseEntity.created(
+            ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/api/users/{id}")
+                .buildAndExpand(user.getId())
+                .toUri()
+        ).body(ApiResponse.success(user));
     }
 
     @Operation(summary = "로그인", description = "아이디와 비밀번호로 로그인합니다.")

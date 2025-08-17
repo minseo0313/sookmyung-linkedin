@@ -29,48 +29,44 @@ public class AuthService {
     @Transactional
     public UserResponse register(UserRegisterRequest request) {
         // 중복 체크
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new ApiException(ErrorCode.USER_ALREADY_EXISTS, "이미 존재하는 아이디입니다.");
-        }
         if (userRepository.existsByStudentId(request.getStudentId())) {
             throw new ApiException(ErrorCode.USER_ALREADY_EXISTS, "이미 존재하는 학번입니다.");
         }
-        if (userRepository.existsBySookmyungEmail(request.getSookmyungEmail())) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorCode.USER_ALREADY_EXISTS, "이미 존재하는 이메일입니다.");
-        }
-        if (userRepository.existsByPhone(request.getPhone())) {
-            throw new ApiException(ErrorCode.USER_ALREADY_EXISTS, "이미 존재하는 전화번호입니다.");
         }
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        // 사용자 생성
+        // 사용자 생성 (권한성 필드는 엔티티 기본값 사용)
         User user = User.builder()
-                .username(request.getUsername())
-                .passwordHash(encodedPassword)
-                .fullName(request.getFullName())
-                .birthDate(request.getBirthDate())
-                .phone(request.getPhone())
                 .studentId(request.getStudentId())
                 .department(request.getDepartment())
-                .sookmyungEmail(request.getSookmyungEmail())
-                .approvalStatus(ApprovalStatus.PENDING)
-                .operator(false)
-                .reportCount(0)
+                .name(request.getName())
+                .birthDate(request.getBirthDate())
+                .phoneNumber(request.getPhoneNumber())
+                .email(request.getEmail())
+                .passwordHash(encodedPassword)
                 .build();
+        
+        // 안전장치: reportCount 명시적 초기화
+        user.setReportCount(0);
 
         User savedUser = userRepository.save(user);
         return UserResponse.from(savedUser);
     }
 
     public TokenResponse login(UserLoginRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByStudentId(request.getStudentId())
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new ApiException(ErrorCode.INVALID_PASSWORD, "비밀번호가 올바르지 않습니다.");
         }
+
+        // 마지막 로그인 시간 업데이트
+        user.setLastLoginAt(java.time.LocalDateTime.now());
 
         // TODO: JWT 토큰 생성 로직 구현 필요
         String token = "dummy-token-" + user.getId();
@@ -89,10 +85,12 @@ public class AuthService {
 
     @Transactional
     public void deleteAccount(String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
         
-        userRepository.delete(user);
+        // Soft delete
+        user.setIsDeleted(true);
+        userRepository.save(user);
         log.info("사용자 {} 계정 삭제", username);
     }
 
@@ -104,7 +102,7 @@ public class AuthService {
     }
 
     public boolean verifyPassword(VerifyPasswordRequest request, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         return passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash());

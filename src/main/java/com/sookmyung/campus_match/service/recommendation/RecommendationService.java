@@ -5,6 +5,7 @@ import com.sookmyung.campus_match.domain.recommendation.UserRecommendation;
 import com.sookmyung.campus_match.domain.user.User;
 import com.sookmyung.campus_match.domain.user.UserInterest;
 import com.sookmyung.campus_match.domain.post.Post;
+import com.sookmyung.campus_match.domain.common.enums.PostCategory;
 import com.sookmyung.campus_match.repository.recommendation.UserEmbeddingRepository;
 import com.sookmyung.campus_match.repository.recommendation.UserRecommendationRepository;
 import com.sookmyung.campus_match.repository.user.UserInterestRepository;
@@ -19,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @Service
@@ -156,24 +159,24 @@ public class RecommendationService {
             return 0.5; // 둘 다 게시글이 없으면 중간 점수
         }
 
-        Set<Long> categoryIds1 = posts1.stream()
-                .map(post -> post.getCategory().getId())
+        Set<PostCategory> categories1 = posts1.stream()
+                .map(post -> post.getCategory())
                 .collect(Collectors.toSet());
         
-        Set<Long> categoryIds2 = posts2.stream()
-                .map(post -> post.getCategory().getId())
+        Set<PostCategory> categories2 = posts2.stream()
+                .map(post -> post.getCategory())
                 .collect(Collectors.toSet());
 
-        if (categoryIds1.isEmpty() || categoryIds2.isEmpty()) {
+        if (categories1.isEmpty() || categories2.isEmpty()) {
             return 0.0;
         }
 
         // Jaccard 유사도 계산
-        Set<Long> intersection = new HashSet<>(categoryIds1);
-        intersection.retainAll(categoryIds2);
+        Set<PostCategory> intersection = new HashSet<>(categories1);
+        intersection.retainAll(categories2);
 
-        Set<Long> union = new HashSet<>(categoryIds1);
-        union.addAll(categoryIds2);
+        Set<PostCategory> union = new HashSet<>(categories1);
+        union.addAll(categories2);
 
         return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
     }
@@ -245,5 +248,58 @@ public class RecommendationService {
                 log.error("Failed to generate recommendations for user: {}", user.getUsername(), e);
             }
         }
+    }
+
+    /**
+     * 사용자에게 추천할 다른 사용자 목록 조회 (페이징)
+     */
+    public Page<User> getRecommendedUsers(String username, Pageable pageable) {
+        User user = userRepository.findByStudentId(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        
+        // 승인된 사용자 중 본인을 제외한 사용자들을 반환
+        return userRepository.findByApprovalStatusAndIdNot(ApprovalStatus.APPROVED, user.getId(), pageable);
+    }
+
+    /**
+     * 특정 사용자에게 추천할 다른 사용자 목록 조회
+     */
+    public List<User> getRecommendedUsersForUser(Long userId, int limit) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        
+        // 승인된 사용자 중 본인을 제외한 사용자들을 반환
+        List<User> recommendedUsers = userRepository.findByApprovalStatusAndIdNot(ApprovalStatus.APPROVED, user.getId());
+        
+        // 간단한 추천 로직: 같은 학과 사용자 우선
+        recommendedUsers.sort((u1, u2) -> {
+            boolean sameDept1 = u1.getDepartment().equals(user.getDepartment());
+            boolean sameDept2 = u2.getDepartment().equals(user.getDepartment());
+            if (sameDept1 && !sameDept2) return -1;
+            if (!sameDept1 && sameDept2) return 1;
+            return 0;
+        });
+        
+        return recommendedUsers.stream().limit(limit).collect(Collectors.toList());
+    }
+
+    /**
+     * 관심사 기반 사용자 추천
+     */
+    public List<User> getUsersByInterest(String interestType, int limit) {
+        // 간단한 구현: 승인된 사용자 중 랜덤하게 반환
+        List<User> users = userRepository.findByApprovalStatus(ApprovalStatus.APPROVED);
+        Collections.shuffle(users);
+        return users.stream().limit(limit).collect(Collectors.toList());
+    }
+
+    /**
+     * 학과 기반 사용자 추천
+     */
+    public List<User> getUsersByDepartment(String department, int limit) {
+        return userRepository.findByDepartmentAndApprovalStatus(department, ApprovalStatus.APPROVED)
+                .stream()
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 }

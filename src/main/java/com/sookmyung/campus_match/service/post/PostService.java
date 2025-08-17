@@ -1,7 +1,7 @@
 package com.sookmyung.campus_match.service.post;
 
 import com.sookmyung.campus_match.domain.post.Post;
-import com.sookmyung.campus_match.domain.post.PostCategory;
+import com.sookmyung.campus_match.domain.common.enums.PostCategory;
 import com.sookmyung.campus_match.domain.post.PostLike;
 import com.sookmyung.campus_match.domain.post.PostApplication;
 import com.sookmyung.campus_match.domain.user.User;
@@ -12,7 +12,7 @@ import com.sookmyung.campus_match.dto.like.PostLikeCountResponse;
 import com.sookmyung.campus_match.dto.application.PostApplicationRequest;
 import com.sookmyung.campus_match.dto.application.PostApplicationResponse;
 import com.sookmyung.campus_match.repository.post.PostRepository;
-import com.sookmyung.campus_match.repository.post.PostCategoryRepository;
+
 import com.sookmyung.campus_match.repository.post.PostLikeRepository;
 import com.sookmyung.campus_match.repository.post.PostApplicationRepository;
 import com.sookmyung.campus_match.repository.user.UserRepository;
@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.time.LocalDateTime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @Service
@@ -32,7 +34,6 @@ import java.time.LocalDateTime;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final PostCategoryRepository postCategoryRepository;
     private final PostLikeRepository postLikeRepository;
     private final PostApplicationRepository postApplicationRepository;
     private final UserRepository userRepository;
@@ -213,22 +214,20 @@ public class PostService {
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + authorId));
         
-        PostCategory category = null;
-        if (request.getCategoryId() != null) {
-            category = postCategoryRepository.findById(request.getCategoryId())
-                    .orElseThrow(() -> new IllegalArgumentException("Category not found: " + request.getCategoryId()));
-        }
-        
         Post post = Post.builder()
                 .author(author)
-                .category(category)
-                .postTitle(request.getTitle())
-                .postContent(request.getContent())
-                .recruitCount(request.getRecruitCount())
-                .requiredRoles(String.join(",", request.getRequiredRoles()))
+                .category(request.getCategory())
+                .title(request.getTitle())
+                .content(request.getContent())
+                .requiredRoles(request.getRequiredRoles())
+                .recruitmentCount(request.getRecruitmentCount())
                 .duration(request.getDuration())
-                .link(request.getLink())
-                .imageUrl(request.getImageUrl())
+                .linkUrl(request.getLinkUrl())
+                .isClosed(false)
+                .viewCount(0)
+                .likeCount(0)
+                .commentCount(0)
+                .isDeleted(false)
                 .build();
         
         return postRepository.save(post);
@@ -243,12 +242,26 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
         
         if (request.getTitle() != null) {
-            // 제목 수정 로직
+            post.setTitle(request.getTitle());
         }
         if (request.getContent() != null) {
-            // 내용 수정 로직
+            post.setContent(request.getContent());
         }
-        // 기타 필드 수정 로직...
+        if (request.getCategory() != null) {
+            post.setCategory(request.getCategory());
+        }
+        if (request.getRequiredRoles() != null) {
+            post.setRequiredRoles(request.getRequiredRoles());
+        }
+        if (request.getRecruitmentCount() != null) {
+            post.setRecruitmentCount(request.getRecruitmentCount());
+        }
+        if (request.getDuration() != null) {
+            post.setDuration(request.getDuration());
+        }
+        if (request.getLinkUrl() != null) {
+            post.setLinkUrl(request.getLinkUrl());
+        }
         
         return postRepository.save(post);
     }
@@ -261,6 +274,13 @@ public class PostService {
     }
 
     /**
+     * 게시글 목록 조회
+     */
+    public Page<Post> getPosts(Pageable pageable) {
+        return postRepository.findAllActiveAndOpen(pageable);
+    }
+
+    /**
      * 조회수 증가
      */
     @Transactional
@@ -270,7 +290,7 @@ public class PostService {
 
     @Transactional
     public void likePost(Long postId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         Post post = postRepository.findById(postId)
@@ -303,7 +323,7 @@ public class PostService {
 
     @Transactional
     public PostApplicationResponse applyToPost(Long postId, PostApplicationRequest request, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         Post post = postRepository.findById(postId)
@@ -327,7 +347,7 @@ public class PostService {
     }
 
     public List<PostApplicationResponse> getApplications(Long postId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         Post post = postRepository.findById(postId)
@@ -346,7 +366,7 @@ public class PostService {
 
     @Transactional
     public void acceptApplication(Long postId, Long applicantId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         Post post = postRepository.findById(postId)
@@ -366,7 +386,7 @@ public class PostService {
 
     @Transactional
     public void rejectApplication(Long postId, Long applicantId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         Post post = postRepository.findById(postId)
@@ -386,7 +406,7 @@ public class PostService {
 
     @Transactional
     public void closePost(Long postId, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
         
         Post post = postRepository.findById(postId)
@@ -398,6 +418,24 @@ public class PostService {
         }
 
         post.closeRecruitment();
+        postRepository.save(post);
+    }
+
+    @Transactional
+    public void deletePost(Long postId, String username) {
+        User user = userRepository.findByStudentId(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+        
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+
+        // 게시글 작성자만 삭제할 수 있음
+        if (!post.getAuthor().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("게시글 작성자만 삭제할 수 있습니다.");
+        }
+
+        // Soft delete
+        post.setIsDeleted(true);
         postRepository.save(post);
     }
 }

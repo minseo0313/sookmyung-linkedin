@@ -2,7 +2,9 @@ spring:
   application:
     name: campus-match
   profiles:
-    active: dev    # 로컬이 항상 dev로 뜨게 하려면 넣기(선택)
+    active: local # 기본 프로필: local (로컬 개발 환경)
+    # 프로필 우선순위: local > dev > prod > test
+    # IntelliJ Run Configuration에서 -Dspring.profiles.active=local 또는 dev 설정 필요
 
   flyway:
     enabled: false # Flyway 사용 안 할 경우 비활성화

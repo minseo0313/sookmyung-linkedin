@@ -1,0 +1,65 @@
+# 로컬 개발 환경 설정
+server:
+  port: 8080
+
+spring:
+  datasource:
+    # 127.0.0.1 사용 이유: localhost는 IPv6 우선순위로 인한 연결 문제 방지
+    # allowPublicKeyRetrieval=true: MySQL 8.0+ 보안 정책으로 인한 연결 오류 해결
+    # useSSL=false: 로컬 개발 환경에서 SSL 인증서 문제 방지
+    url: jdbc:mysql://127.0.0.1:3306/campus?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useSSL=false
+    username: campus
+    password: campuspw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # 커넥션 풀 설정으로 연결 안정성 향상
+      initializationFailTimeout: 0    # 초기화 실패 시 즉시 실패 처리
+      maximum-pool-size: 10          # 최대 커넥션 수
+      minimum-idle: 2                # 최소 유휴 커넥션 수
+      connection-timeout: 30000      # 커넥션 타임아웃 (30초)
+      validation-timeout: 5000       # 검증 타임아웃 (5초)
+      idle-timeout: 600000           # 유휴 커넥션 타임아웃 (10분)
+      max-lifetime: 1800000          # 커넥션 최대 수명 (30분)
+  jpa:
+    hibernate:
+      ddl-auto: update
+      # ddl-auto 옵션 설명:
+      # - update: 엔티티 변경사항을 자동으로 DB에 반영 (로컬 개발용)
+      # - validate: 엔티티와 DB 스키마 일치 여부만 검증
+      # - none: 스키마 변경 없음 (운영 환경용)
+      # - create: 애플리케이션 시작 시 테이블 재생성 (주의: 데이터 손실)
+      # - create-drop: 시작 시 생성, 종료 시 삭제 (테스트용)
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc.time_zone: Asia/Seoul
+        default_batch_fetch_size: 100
+        jdbc.batch_size: 50
+  flyway:
+    enabled: false
+    # 로컬 개발 환경에서는 Flyway 대신 Hibernate가 스키마를 관리
+    # ddl-auto: update로 엔티티 기반 스키마 자동 생성
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+    org.springframework.web: debug
+    org.springframework.security: debug
+    com.sookmyung.campus_match: debug
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 로컬 개발용 추가 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

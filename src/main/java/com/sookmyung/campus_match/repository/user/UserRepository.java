@@ -17,6 +17,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
     
+    Optional<User> findByStudentId(String studentId);
+    
     boolean existsByStudentId(String studentId);
     
     boolean existsByEmail(String email);
@@ -48,4 +50,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("keyword") String keyword1, 
             @Param("keyword") String keyword2, 
             Pageable pageable);
+
+    // SearchService에서 호출하는 메서드들
+    @Query("SELECT u FROM User u WHERE " +
+           "(:keyword IS NULL OR (u.name LIKE %:keyword% OR u.department LIKE %:keyword%)) AND " +
+           "(:department IS NULL OR u.department = :department)")
+    Page<User> searchByKeywordAndDepartment(@Param("keyword") String keyword, 
+                                           @Param("department") String department, 
+                                           Pageable pageable);
+    
+    @Query("SELECT u FROM User u WHERE u.department = :department")
+    Page<User> findByDepartment(@Param("department") String department, Pageable pageable);
+    
+    @Query("SELECT u FROM User u WHERE u.approvalStatus = :status AND u.id != :userId")
+    Page<User> findByApprovalStatusAndIdNot(@Param("status") ApprovalStatus status, 
+                                           @Param("userId") Long userId, 
+                                           Pageable pageable);
+    
+    @Query("SELECT u FROM User u WHERE u.approvalStatus = :status AND u.id != :userId")
+    List<User> findByApprovalStatusAndIdNot(@Param("status") ApprovalStatus status, 
+                                           @Param("userId") Long userId);
+    
+    @Query("SELECT u FROM User u WHERE u.department = :department AND u.approvalStatus = :status")
+    List<User> findByDepartmentAndApprovalStatus(@Param("department") String department, 
+                                                @Param("status") ApprovalStatus status);
 }

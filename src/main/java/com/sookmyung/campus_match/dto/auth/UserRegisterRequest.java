@@ -1,62 +1,52 @@
 package com.sookmyung.campus_match.dto.auth;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
-/**
- * 회원 가입 요청 DTO.
- * - 규칙: username=학번, sookmyungEmail만 사용
- * - 비밀번호 규칙(대/소문자+숫자+특수문자 포함)은 DTO가 아닌 Validator/Service에서 검증
- */
+import java.time.LocalDate;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
+@Schema(description = "회원가입 요청")
 public class UserRegisterRequest {
 
-    @Schema(description = "이름(실명)", example = "남민서")
-    @NotBlank
-    @Size(max = 60)
-    private String fullName;
+    @NotBlank(message = "이름은 필수입니다")
+    @Size(min = 2, max = 50, message = "이름은 2자 이상 50자 이하여야 합니다")
+    @Schema(description = "이름", example = "홍길동")
+    private String name;
 
-    @Schema(description = "생년월일(ISO-8601)", example = "2001-05-21")
-    @NotNull
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private java.time.LocalDate birthDate;
+    @NotNull(message = "생년월일은 필수입니다")
+    @Past(message = "생년월일은 과거 날짜여야 합니다")
+    @Schema(description = "생년월일", example = "2000-01-01")
+    private LocalDate birthDate;
 
-    @Schema(description = "전화번호(하이픈 가능)", example = "010-1234-5678")
-    @NotBlank
-    @Size(max = 30)
-    private String phone;
+    @NotBlank(message = "전화번호는 필수입니다")
+    @Pattern(regexp = "^[0-9]{10,11}$", message = "전화번호 형식이 올바르지 않습니다")
+    @Schema(description = "전화번호", example = "01012345678")
+    private String phoneNumber;
 
-    @Schema(description = "학번(별도 보관)", example = "20251234")
-    @NotBlank
-    @Size(max = 50)
+    @NotBlank(message = "학번은 필수입니다")
+    @Size(min = 8, max = 20, message = "학번은 8자 이상 20자 이하여야 합니다")
+    @Schema(description = "학번", example = "20240001")
     private String studentId;
 
-    @Schema(description = "학과", example = "소프트웨어융합전공")
-    @NotBlank
-    @Size(max = 80)
+    @NotBlank(message = "학과는 필수입니다")
+    @Size(max = 100, message = "학과명은 100자 이하여야 합니다")
+    @Schema(description = "학과", example = "컴퓨터학부")
     private String department;
 
-    @Schema(description = "숙명 이메일", example = "minseo.nam@sookmyung.ac.kr")
-    @NotBlank
-    @Email
-    @Size(max = 120)
-    private String sookmyungEmail;
+    @NotBlank(message = "이메일은 필수입니다")
+    @Email(message = "이메일 형식이 올바르지 않습니다")
+    @Schema(description = "이메일", example = "student@sookmyung.ac.kr")
+    private String email;
 
-    @Schema(description = "로그인 아이디(=학번)", example = "20251234")
-    @NotBlank
-    @Size(max = 50)
-    private String username;
-
-    @Schema(description = "비밀번호(6~10자) — 조합 규칙은 서비스에서 검증", example = "Abc123!")
-    @NotBlank
-    @Size(min = 6, max = 10)
+    @NotBlank(message = "비밀번호는 필수입니다")
+    @Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하여야 합니다")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$", 
+             message = "비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다")
+    @Schema(description = "비밀번호", example = "password123!")
     private String password;
 }

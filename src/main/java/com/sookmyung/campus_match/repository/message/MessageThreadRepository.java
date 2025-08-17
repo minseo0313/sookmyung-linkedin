@@ -39,4 +39,10 @@ public interface MessageThreadRepository extends JpaRepository<MessageThread, Lo
     @Query("SELECT mt FROM MessageThread mt WHERE " +
            "(mt.user1.id = :userId OR mt.user2.id = :userId) ORDER BY mt.updatedAt DESC")
     Page<MessageThread> findAllForUserOrderByLastMessageAtDesc(@Param("userId") Long userId, Pageable pageable);
+
+    // MessageService에서 호출하는 메서드들
+    @Query("SELECT mt FROM MessageThread mt WHERE " +
+           "(mt.user1.id = :userId OR mt.user2.id = :userId OR " +
+           "mt.participant1.id = :userId OR mt.participant2.id = :userId)")
+    List<MessageThread> findByUserId(@Param("userId") Long userId);
 }

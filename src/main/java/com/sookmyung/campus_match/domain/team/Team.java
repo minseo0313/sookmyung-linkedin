@@ -8,6 +8,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "teams")
@@ -17,6 +19,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Team extends BaseEntity {
+
+    @Column(name = "team_name", nullable = false, length = 255)
+    private String teamName;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
@@ -29,12 +37,72 @@ public class Team extends BaseEntity {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
+    @Column(name = "is_active")
+    private Boolean isActive;
+
+    @Column(name = "max_members")
+    private Integer maxMembers;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
 
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<TeamMember> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<TeamSchedule> schedules = new ArrayList<>();
+
+    // 도메인 메서드들
+    public void confirm() {
+        this.confirmedAt = LocalDateTime.now();
+        this.isActive = true;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+    public boolean isConfirmed() {
+        return this.confirmedAt != null;
+    }
+
+    public boolean isActive() {
+        return this.isActive != null && this.isActive;
+    }
+
+    public boolean canAddMember() {
+        return this.maxMembers == null || this.members.size() < this.maxMembers;
+    }
+
+    public void addMember(TeamMember member) {
+        if (!canAddMember()) {
+            throw new IllegalStateException("팀 인원이 가득 찼습니다.");
+        }
+        this.members.add(member);
+    }
+
+    public void removeMember(TeamMember member) {
+        this.members.remove(member);
+    }
+
+    public boolean isMember(User user) {
+        return this.members.stream()
+                .anyMatch(member -> member.getUser().getId().equals(user.getId()));
+    }
+
+    public boolean isLeader(User user) {
+        return this.createdBy.getId().equals(user.getId());
+    }
+
     // 호환성 메서드들
     public String getName() {
-        return "Team-" + this.getId();
+        return this.teamName != null ? this.teamName : "Team-" + this.getId();
+    }
+
+    public int getCurrentMemberCount() {
+        return this.members.size();
     }
 }

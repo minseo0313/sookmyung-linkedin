@@ -47,6 +47,9 @@ public class UserResponse {
     @Schema(description = "승인 상태", example = "APPROVED")
     private ApprovalStatus approvalStatus;
 
+    @Schema(description = "신고 누적 횟수", example = "0", accessMode = Schema.AccessMode.READ_ONLY)
+    private Integer reportCount;
+
     // Factory method
     public static UserResponse from(User user) {
         return UserResponse.builder()
@@ -59,6 +62,7 @@ public class UserResponse {
                 .phone(user.getPhone())
                 .department(user.getDepartment())
                 .approvalStatus(user.getApprovalStatus())
+                .reportCount(user.getReportCount())
                 .build();
     }
 }

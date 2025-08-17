@@ -33,6 +33,10 @@ public class Message extends BaseEntity {
     @Column(name = "deleted")
     private Boolean deleted;
 
+    // MessageService에서 호출하는 필드들
+    @Column(name = "deleted_flag")
+    private Boolean deletedFlag;
+
     // 도메인 메서드들
     public void edit(String newContent) {
         if (newContent != null && !newContent.isBlank()) {
@@ -43,6 +47,7 @@ public class Message extends BaseEntity {
 
     public void softDelete() {
         this.deleted = true;
+        this.deletedFlag = true;
     }
 
     // 호환성 메서드들
@@ -51,7 +56,8 @@ public class Message extends BaseEntity {
     }
 
     public boolean isDeleted() {
-        return this.deleted != null ? this.deleted : false;
+        return this.deleted != null ? this.deleted : 
+               (this.deletedFlag != null ? this.deletedFlag : false);
     }
 
     public Long getThreadId() {

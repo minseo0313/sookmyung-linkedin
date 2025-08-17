@@ -37,7 +37,32 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(users));
     }
 
-    @Operation(summary = "회원 승인", description = "가입 승인 처리를 합니다.")
+    @Operation(
+        summary = "회원 승인/반려", 
+        description = "가입 승인 또는 반려 처리를 합니다. approved=true는 승인, false는 반려를 의미합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200", 
+                description = "승인/반려 처리 성공 - 사용자 상태가 변경되었습니다"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400", 
+                description = "요청 검증 실패 - approved 필드가 누락되었습니다"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403", 
+                description = "관리자 권한 없음 - 관리자만 접근 가능합니다"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404", 
+                description = "사용자를 찾을 수 없음 - 해당 ID의 사용자가 존재하지 않습니다"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "500", 
+                description = "서버 내부 오류 - 시스템 오류가 발생했습니다"
+            )
+        }
+    )
     @PatchMapping("/users/{id}/approve")
     public ResponseEntity<ApiResponse<String>> approveUser(
             @Parameter(description = "사용자 ID", example = "1")
@@ -45,7 +70,36 @@ public class AdminController {
             @Valid @RequestBody ApproveUserRequest request) {
         
         adminService.approveUser(id, request);
-        return ResponseEntity.ok(ApiResponse.success("사용자가 승인되었습니다."));
+        return ResponseEntity.ok(ApiResponse.success("사용자 상태가 변경되었습니다."));
+    }
+
+    @Operation(
+        summary = "회원 권한 변경", 
+        description = "사용자의 운영자 권한을 변경합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200", 
+                description = "권한 변경 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403", 
+                description = "관리자 권한 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404", 
+                description = "사용자를 찾을 수 없음"
+            )
+        }
+    )
+    @PatchMapping("/users/{id}/role")
+    public ResponseEntity<ApiResponse<String>> changeUserRole(
+            @Parameter(description = "사용자 ID", example = "1")
+            @PathVariable Long id,
+            @Parameter(description = "운영자 권한 여부", example = "true")
+            @RequestParam Boolean isOperator) {
+        
+        adminService.changeUserRole(id, isOperator);
+        return ResponseEntity.ok(ApiResponse.success("사용자 권한이 변경되었습니다."));
     }
 
     @Operation(summary = "회원 강제 탈퇴", description = "신고 누적 회원 탈퇴 처리를 합니다.")

@@ -32,8 +32,30 @@ public class TeamMember extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // TeamService에서 호출하는 필드들
+    @Column(name = "role")
+    private String role;
+
     // 호환성 메서드들
     public MemberRole getRole() {
         return this.memberRole;
+    }
+
+    public String getRoleString() {
+        return this.role != null ? this.role : (this.memberRole != null ? this.memberRole.name() : null);
+    }
+
+    // 빌더 메서드 추가
+    public static class TeamMemberBuilder {
+        public TeamMemberBuilder role(String role) {
+            this.role = role;
+            this.memberRole = MemberRole.valueOf(role);
+            return this;
+        }
+
+        public TeamMemberBuilder joinedAt(LocalDateTime joinedAt) {
+            this.joinedAt = joinedAt;
+            return this;
+        }
     }
 }

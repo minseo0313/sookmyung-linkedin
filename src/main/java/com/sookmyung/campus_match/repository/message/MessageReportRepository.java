@@ -1,6 +1,8 @@
 package com.sookmyung.campus_match.repository.message;
 
 import com.sookmyung.campus_match.domain.message.MessageReport;
+import com.sookmyung.campus_match.domain.message.Message;
+import com.sookmyung.campus_match.domain.user.User;
 import com.sookmyung.campus_match.domain.common.enums.ApplicationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,4 +41,8 @@ public interface MessageReportRepository extends JpaRepository<MessageReport, Lo
     
     @Query("SELECT mr FROM MessageReport mr WHERE mr.reporter.id = :reporterId AND mr.reportedMessage.id = :messageId")
     boolean existsByReporterIdAndMessageId(@Param("reporterId") Long reporterId, @Param("messageId") Long messageId);
+
+    // MessageService에서 호출하는 메서드들
+    @Query("SELECT mr FROM MessageReport mr WHERE mr.message = :message AND mr.reporter = :reporter")
+    boolean existsByMessageAndReporter(@Param("message") Message message, @Param("reporter") User reporter);
 }

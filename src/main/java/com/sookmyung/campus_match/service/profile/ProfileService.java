@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @Service
@@ -27,7 +29,7 @@ public class ProfileService {
 
     @Transactional
     public ProfileResponse createProfile(ProfileCreateRequest request, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         // 이미 프로필이 있는지 확인
@@ -49,7 +51,7 @@ public class ProfileService {
 
     @Transactional
     public ProfileResponse updateProfile(Long profileId, ProfileUpdateRequest request, String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByStudentId(username)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         Profile profile = profileRepository.findById(profileId)

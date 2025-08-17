@@ -1,0 +1,20 @@
+# 테스트 프로필용 최소 설정
+# contextLoads 테스트에서 DB 관련 자동설정 제외
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  
+  # 자동설정 제외 (contextLoads 테스트용)
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+      - org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration
+
+# 로깅 레벨 설정
+logging:
+  level:
+    com.sookmyung.campus_match: DEBUG

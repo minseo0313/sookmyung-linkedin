@@ -9,3 +9,8 @@ public enum ApplicationStatus {
     REJECTED   // 거부됨
 }
 
+
+
+
+
+

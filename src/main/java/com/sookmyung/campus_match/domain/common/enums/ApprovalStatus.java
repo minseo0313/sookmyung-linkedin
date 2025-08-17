@@ -9,3 +9,8 @@ public enum ApprovalStatus {
     REJECTED   // 거부됨
 }
 
+
+
+
+
+

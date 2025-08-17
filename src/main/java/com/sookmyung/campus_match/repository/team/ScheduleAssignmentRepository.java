@@ -29,4 +29,8 @@ public interface ScheduleAssignmentRepository extends JpaRepository<ScheduleAssi
     // 추가 메서드들 (기존 서비스 코드와 호환성을 위해)
     @Query("SELECT sa FROM ScheduleAssignment sa WHERE sa.schedule.team.id = :teamId")
     List<ScheduleAssignment> findBySchedule_Team_Id(@Param("teamId") Long teamId);
+
+    // TeamService에서 호출하는 메서드들
+    @Query("SELECT sa FROM ScheduleAssignment sa WHERE sa.schedule.id = :scheduleId AND sa.assignee.id = :assigneeId")
+    boolean existsBySchedule_IdAndAssignee_Id(@Param("scheduleId") Long scheduleId, @Param("assigneeId") Long assigneeId);
 }

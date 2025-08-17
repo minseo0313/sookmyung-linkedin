@@ -1,6 +1,8 @@
 package com.sookmyung.campus_match.repository.message;
 
 import com.sookmyung.campus_match.domain.message.Message;
+import com.sookmyung.campus_match.domain.message.MessageThread;
+import com.sookmyung.campus_match.domain.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -65,4 +67,16 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     
     @Query("SELECT m FROM Message m WHERE m.thread.id = :threadId ORDER BY m.createdAt DESC")
     List<Message> findAllByThreadIdOrderByCreatedAtDescSafe(@Param("threadId") Long threadId);
+
+    // MessageService에서 호출하는 메서드들
+    List<Message> findByThreadOrderByCreatedAtAsc(MessageThread thread);
+    
+    Optional<Message> findFirstByThreadOrderByCreatedAtDesc(MessageThread thread);
+    
+    Page<Message> findBySenderOrderByCreatedAtDesc(User sender, Pageable pageable);
+    
+    @Query("SELECT COUNT(m) FROM Message m WHERE m.thread.id IN " +
+           "(SELECT mt.id FROM MessageThread mt WHERE mt.participant1.id = :userId OR mt.participant2.id = :userId) " +
+           "AND m.sender.id != :userId AND m.deleted = false")
+    long countUnreadMessagesByUser(@Param("userId") Long userId);
 }

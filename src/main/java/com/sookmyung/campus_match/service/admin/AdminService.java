@@ -1,6 +1,7 @@
 package com.sookmyung.campus_match.service.admin;
 
 import com.sookmyung.campus_match.domain.admin.SystemNotice;
+import com.sookmyung.campus_match.domain.message.MessageReport;
 import com.sookmyung.campus_match.domain.user.User;
 import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import com.sookmyung.campus_match.dto.admin.ApproveUserRequest;
@@ -21,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.sookmyung.campus_match.domain.admin.Admin;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @Service
@@ -37,10 +40,27 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        user.approve();
+        // 승인 상태 변경
+        if (request.getApproved()) {
+            user.approve();
+            log.info("사용자 승인: 사용자 ID {}", userId);
+        } else {
+            user.reject();
+            log.info("사용자 반려: 사용자 ID {}", userId);
+        }
+        
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void changeUserRole(Long userId, Boolean isOperator) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        user.setOperator(isOperator);
         userRepository.save(user);
         
-        log.info("사용자 승인: 사용자 ID {}", userId);
+        log.info("사용자 권한 변경: 사용자 ID {}, 운영자 권한: {}", userId, isOperator);
     }
 
     @Transactional
@@ -87,8 +107,10 @@ public class AdminService {
     }
 
     public List<MessageReportResponse> getReportedMessages() {
-        // TODO: 신고된 메시지 조회 로직 구현 필요
-        return List.of(); // 임시 빈 리스트
+        List<MessageReport> reports = messageReportRepository.findAll();
+        return reports.stream()
+                .map(MessageReportResponse::from)
+                .collect(Collectors.toList());
     }
 
     public StatisticsResponse getStatistics() {

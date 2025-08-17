@@ -2,6 +2,7 @@ package com.sookmyung.campus_match.domain.message;
 
 import com.sookmyung.campus_match.domain.common.BaseEntity;
 import com.sookmyung.campus_match.domain.common.enums.StartedFromType;
+import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,11 +21,11 @@ public class MessageThread extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user1_id", nullable = false)
-    private com.sookmyung.campus_match.domain.user.User user1;
+    private User user1;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user2_id", nullable = false)
-    private com.sookmyung.campus_match.domain.user.User user2;
+    private User user2;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "started_from_type", nullable = false)
@@ -52,6 +53,18 @@ public class MessageThread extends BaseEntity {
     @Column(name = "unread_count_b")
     private Integer unreadCountB;
 
+    // 새로운 필드들 (서비스 코드 호환성을 위해)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant1_id")
+    private User participant1;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "participant2_id")
+    private User participant2;
+
+    @Column(name = "last_message_time")
+    private LocalDateTime lastMessageTime;
+
     // 도메인 메서드들
     public void touchUpdatedAt() {
         this.setUpdatedAt(LocalDateTime.now());
@@ -64,28 +77,46 @@ public class MessageThread extends BaseEntity {
 
     public void updateLastMessageAt(LocalDateTime lastMessageAt) {
         this.lastMessageAt = lastMessageAt;
+        this.lastMessageTime = lastMessageAt;
         this.setUpdatedAt(LocalDateTime.now());
     }
 
-    // 호환성 메서드들
-    public com.sookmyung.campus_match.domain.user.User getParticipantA() {
-        return this.user1;
+    public void updateLastMessageTime(LocalDateTime lastMessageTime) {
+        this.lastMessageTime = lastMessageTime;
+        this.lastMessageAt = lastMessageTime;
+        this.setUpdatedAt(LocalDateTime.now());
     }
 
-    public com.sookmyung.campus_match.domain.user.User getParticipantB() {
-        return this.user2;
+    public boolean isParticipant(Long userId) {
+        return (user1 != null && user1.getId().equals(userId)) ||
+               (user2 != null && user2.getId().equals(userId)) ||
+               (participant1 != null && participant1.getId().equals(userId)) ||
+               (participant2 != null && participant2.getId().equals(userId));
+    }
+
+    // 호환성 메서드들
+    public User getParticipantA() {
+        return this.user1 != null ? this.user1 : this.participant1;
+    }
+
+    public User getParticipantB() {
+        return this.user2 != null ? this.user2 : this.participant2;
     }
 
     public Long getParticipantAId() {
-        return this.participantAId != null ? this.participantAId : (this.user1 != null ? this.user1.getId() : null);
+        return this.participantAId != null ? this.participantAId : 
+               (this.user1 != null ? this.user1.getId() : 
+               (this.participant1 != null ? this.participant1.getId() : null));
     }
 
     public Long getParticipantBId() {
-        return this.participantBId != null ? this.participantBId : (this.user2 != null ? this.user2.getId() : null);
+        return this.participantBId != null ? this.participantBId : 
+               (this.user2 != null ? this.user2.getId() : 
+               (this.participant2 != null ? this.participant2.getId() : null));
     }
 
     public LocalDateTime getLastMessageAt() {
-        return this.lastMessageAt;
+        return this.lastMessageAt != null ? this.lastMessageAt : this.lastMessageTime;
     }
 
     public String getLastMessagePreview() {
