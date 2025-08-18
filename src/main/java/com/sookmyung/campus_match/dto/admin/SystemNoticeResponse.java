@@ -4,7 +4,6 @@ import com.sookmyung.campus_match.domain.admin.SystemNotice;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 /**

@@ -15,24 +15,23 @@ import java.util.List;
 @Repository
 public interface TeamScheduleRepository extends JpaRepository<TeamSchedule, Long> {
 
-    List<TeamSchedule> findBySecretaryId(Long secretaryId);
-    
     List<TeamSchedule> findByCreatedById(Long createdById);
     
     @Query("SELECT ts FROM TeamSchedule ts WHERE " +
-           "ts.secretary.team.id = :teamId AND " +
-           "ts.startDate >= :startDate AND ts.endDate <= :endDate")
-    List<TeamSchedule> findByTeamIdAndDateRange(@Param("teamId") Long teamId,
-                                                @Param("startDate") LocalDateTime startDate,
-                                                @Param("endDate") LocalDateTime endDate);
+           "ts.team.id = :teamId AND " +
+           "ts.startAt >= :startAt AND ts.endAt <= :endAt " +
+           "ORDER BY ts.startAt DESC")
+    List<TeamSchedule> findByTeam_IdAndRangeOrderByStartAtDesc(@Param("teamId") Long teamId,
+                                                              @Param("startAt") LocalDateTime startAt,
+                                                              @Param("endAt") LocalDateTime endAt);
     
-    @Query("SELECT ts FROM TeamSchedule ts WHERE ts.secretary.team.id = :teamId ORDER BY ts.startDate ASC")
-    Page<TeamSchedule> findByTeamIdOrderByStartDate(@Param("teamId") Long teamId, Pageable pageable);
+    @Query("SELECT ts FROM TeamSchedule ts WHERE ts.team.id = :teamId ORDER BY ts.startAt ASC")
+    Page<TeamSchedule> findByTeam_IdOrderByStartAtAsc(@Param("teamId") Long teamId, Pageable pageable);
 
     // 추가 메서드들 (기존 서비스 코드와 호환성을 위해)
     List<TeamSchedule> findByTeam(Team team);
 
-    // TeamService에서 호출하는 메서드들
-    @Query("SELECT ts FROM TeamSchedule ts WHERE ts.team.id = :teamId ORDER BY ts.startTime ASC")
-    List<TeamSchedule> findByTeam_IdOrderByStartTimeAsc(@Param("teamId") Long teamId);
+    // TeamCalendarService에서 사용하는 메서드 (startAt 기준 내림차순 정렬)
+    @Query("SELECT ts FROM TeamSchedule ts WHERE ts.team.id = :teamId ORDER BY ts.startAt DESC")
+    List<TeamSchedule> findByTeam_IdOrderByStartAtDesc(@Param("teamId") Long teamId);
 }

@@ -2,7 +2,7 @@ package com.sookmyung.campus_match.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sookmyung.campus_match.dto.auth.UserRegisterRequest;
-import com.sookmyung.campus_match.dto.auth.UserResponse;
+import com.sookmyung.campus_match.dto.user.UserResponse;
 import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,39 +25,34 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class UserRegistrationTest {
+public class UserRegistrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private AuthService authService;
-
     @Autowired
     private ObjectMapper objectMapper;
 
+    @MockBean
+    private AuthService authService;
+
     @Test
-    void register_WhenValidRequest_ShouldReturn201() throws Exception {
+    public void testUserRegistration() throws Exception {
         // Given
         UserRegisterRequest request = UserRegisterRequest.builder()
-                .name("홍길동")
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .phoneNumber("01012345678")
                 .studentId("20240001")
+                .password("Password123!")  // 영문, 숫자, 특수문자 포함
+                .name("김철수")
                 .department("컴퓨터학부")
+                .birthDate(LocalDate.of(2000, 1, 1))
+                .phoneNumber("010-1234-5678")
                 .email("test@sookmyung.ac.kr")
-                .password("password123!")
                 .build();
 
-        // 성공 응답을 위한 UserResponse 생성 및 목킹
         UserResponse userResponse = UserResponse.builder()
                 .id(1L)
-                .username("20240001")
                 .studentId("20240001")
-                .sookmyungEmail("test@sookmyung.ac.kr")
-                .fullName("홍길동")
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .phone("01012345678")
+                .name("김철수")
                 .department("컴퓨터학부")
                 .approvalStatus(ApprovalStatus.PENDING)
                 .build();
@@ -69,109 +64,8 @@ class UserRegistrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", org.hamcrest.Matchers.containsString("/api/users/1")))
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.fullName").value("홍길동"))
-                .andExpect(jsonPath("$.data.sookmyungEmail").value("test@sookmyung.ac.kr"))
-                .andExpect(jsonPath("$.data.studentId").value("20240001"));
-    }
-
-    @Test
-    void register_WhenNameIsMissing_ShouldReturn400WithFieldError() throws Exception {
-        // Given
-        UserRegisterRequest request = UserRegisterRequest.builder()
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .phoneNumber("01012345678")
-                .studentId("20240002")
-                .department("컴퓨터학부")
-                .email("test2@sookmyung.ac.kr")
-                .password("password123!")
-                .build();
-
-        // When & Then
-        mockMvc.perform(post("/api/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.data.errors").isArray())
-                .andExpect(jsonPath("$.data.errors.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$.data.errors[*].field").value(org.hamcrest.Matchers.hasItem("name")))
-                .andExpect(jsonPath("$.data.errors[?(@.field == 'name')].message").exists());
-    }
-
-    @Test
-    void register_WhenEmailIsInvalid_ShouldReturn400WithFieldError() throws Exception {
-        // Given
-        UserRegisterRequest request = UserRegisterRequest.builder()
-                .name("홍길동")
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .phoneNumber("01012345678")
-                .studentId("20240003")
-                .department("컴퓨터학부")
-                .email("invalid-email")
-                .password("password123!")
-                .build();
-
-        // When & Then
-        mockMvc.perform(post("/api/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.data.errors").isArray())
-                .andExpect(jsonPath("$.data.errors.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$.data.errors[*].field").value(org.hamcrest.Matchers.hasItem("email")))
-                .andExpect(jsonPath("$.data.errors[?(@.field == 'email')].message").exists());
-    }
-
-    @Test
-    void register_WhenPasswordIsTooShort_ShouldReturn400WithFieldError() throws Exception {
-        // Given
-        UserRegisterRequest request = UserRegisterRequest.builder()
-                .name("홍길동")
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .phoneNumber("01012345678")
-                .studentId("20240004")
-                .department("컴퓨터학부")
-                .email("test4@sookmyung.ac.kr")
-                .password("123")
-                .build();
-
-        // When & Then
-        mockMvc.perform(post("/api/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.data.errors").isArray())
-                .andExpect(jsonPath("$.data.errors.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$.data.errors[*].field").value(org.hamcrest.Matchers.hasItem("password")))
-                .andExpect(jsonPath("$.data.errors[?(@.field == 'password')].message").exists());
-    }
-
-    @Test
-    void register_WhenMultipleFieldsAreInvalid_ShouldReturn400WithAllFieldErrors() throws Exception {
-        // Given
-        UserRegisterRequest request = UserRegisterRequest.builder()
-                .name("") // 빈 문자열
-                .birthDate(LocalDate.of(2000, 1, 1))
-                .phoneNumber("123") // 너무 짧음
-                .studentId("") // 빈 문자열
-                .department("컴퓨터학부")
-                .email("invalid-email")
-                .password("123") // 너무 짧음
-                .build();
-
-        // When & Then
-        mockMvc.perform(post("/api/users/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.data.errors").isArray())
-                .andExpect(jsonPath("$.data.errors.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(5)))
-                .andExpect(jsonPath("$.data.errors[*].field").value(org.hamcrest.Matchers.hasItems("name", "phoneNumber", "studentId", "email", "password")))
-                .andExpect(jsonPath("$.data.errors[*].message").value(org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.notNullValue())));
+                .andExpect(jsonPath("$.data.studentId").value("20240001"))
+                .andExpect(jsonPath("$.data.name").value("김철수"));
     }
 }

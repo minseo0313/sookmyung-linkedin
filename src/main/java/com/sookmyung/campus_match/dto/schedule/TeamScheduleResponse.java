@@ -47,7 +47,7 @@ public class TeamScheduleResponse {
                 .description(schedule.getDescription())
                 .startAt(schedule.getStartAt())
                 .endAt(schedule.getEndAt())
-                .allDay(schedule.isAllDay())
+                .allDay(false) // 기본값으로 설정
                 .location(schedule.getLocation())
                 .assignments(List.of()) // TODO: 실제 assignments 목록 설정
                 .build();

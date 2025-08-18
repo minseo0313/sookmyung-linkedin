@@ -3,6 +3,7 @@ package com.sookmyung.campus_match.service.team;
 import com.sookmyung.campus_match.domain.team.Team;
 import com.sookmyung.campus_match.domain.team.TeamMember;
 import com.sookmyung.campus_match.domain.team.TeamSchedule;
+import com.sookmyung.campus_match.domain.common.enums.MemberRole;
 import com.sookmyung.campus_match.domain.user.User;
 import com.sookmyung.campus_match.domain.common.enums.CreatedFrom;
 import com.sookmyung.campus_match.domain.common.enums.AssignmentStatus;
@@ -66,8 +67,7 @@ public class TeamService {
         TeamMember leader = TeamMember.builder()
                 .team(savedTeam)
                 .user(user)
-                .role("팀장")
-                .joinedAt(LocalDateTime.now())
+                .role(MemberRole.LEADER)
                 .build();
         teamMemberRepository.save(leader);
 
@@ -135,8 +135,7 @@ public class TeamService {
         TeamMember member = TeamMember.builder()
                 .team(team)
                 .user(newMember)
-                .role("팀원")
-                .joinedAt(LocalDateTime.now())
+                .role(MemberRole.MEMBER)
                 .build();
 
         teamMemberRepository.save(member);
@@ -191,8 +190,8 @@ public class TeamService {
                 .team(team)
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
+                .startAt(request.getStartAt())
+                .endAt(request.getEndAt())
                 .location(request.getLocation())
                 .build();
 
@@ -207,7 +206,7 @@ public class TeamService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ApiException(ErrorCode.TEAM_NOT_FOUND, "팀을 찾을 수 없습니다."));
 
-        List<TeamSchedule> schedules = teamScheduleRepository.findByTeam_IdOrderByStartTimeAsc(teamId);
+        List<TeamSchedule> schedules = teamScheduleRepository.findByTeam_IdOrderByStartAtDesc(teamId);
         return schedules.stream()
                 .map(TeamScheduleResponse::from)
                 .collect(Collectors.toList());

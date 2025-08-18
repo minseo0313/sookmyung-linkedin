@@ -64,9 +64,7 @@ public class MessageController {
             @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody MessageSendRequest request) {
         
-        // TODO: currentUserId를 실제 사용자 식별자로 변환하는 로직 필요
-        String username = "user-" + currentUserId; // 임시 변환
-        MessageResponse message = messageService.sendMessage(request, username);
+        MessageResponse message = messageService.sendMessage(request, currentUserId.toString());
         URI location = URI.create("/api/messages/" + message.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(message));
     }
@@ -80,9 +78,7 @@ public class MessageController {
     public ResponseEntity<ApiEnvelope<List<MessageThreadResponse>>> getMessages(
             @RequestHeader("X-USER-ID") Long currentUserId) {
         
-        // TODO: currentUserId를 실제 사용자 식별자로 변환하는 로직 필요
-        String username = "user-" + currentUserId; // 임시 변환
-        List<MessageThreadResponse> messages = messageService.getMessageThreads(username);
+        List<MessageThreadResponse> messages = messageService.getMessageThreads(currentUserId.toString());
         return ResponseEntity.ok(ApiEnvelope.success(messages));
     }
 
@@ -97,9 +93,7 @@ public class MessageController {
             @PathVariable Long id,
             @RequestHeader("X-USER-ID") Long currentUserId) {
         
-        // TODO: currentUserId를 실제 사용자 식별자로 변환하는 로직 필요
-        String username = "user-" + currentUserId; // 임시 변환
-        List<MessageResponse> messages = messageService.getMessagesInThread(id, username);
+        List<MessageResponse> messages = messageService.getMessagesInThread(id, currentUserId.toString());
         return ResponseEntity.ok(ApiEnvelope.success(messages));
     }
 
@@ -117,9 +111,7 @@ public class MessageController {
             @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody MessageReplyRequest request) {
         
-        // TODO: currentUserId를 실제 사용자 식별자로 변환하는 로직 필요
-        String username = "user-" + currentUserId; // 임시 변환
-        MessageResponse message = messageService.replyToMessage(id, request, username);
+        MessageResponse message = messageService.replyToMessage(id, request, currentUserId.toString());
         URI location = URI.create("/api/messages/" + message.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(message));
     }
@@ -137,9 +129,7 @@ public class MessageController {
             @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody MessageReportRequest request) {
         
-        // TODO: currentUserId를 실제 사용자 식별자로 변환하는 로직 필요
-        String username = "user-" + currentUserId; // 임시 변환
-        MessageReportResponse report = messageService.reportMessage(id, request, username);
+        MessageReportResponse report = messageService.reportMessage(id, request, currentUserId.toString());
         URI location = URI.create("/api/messages/" + id + "/report/" + report.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(report));
     }

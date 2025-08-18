@@ -154,17 +154,6 @@ public class TeamController {
         return ResponseEntity.ok(ApiEnvelope.success("팀이 비활성화되었습니다."));
     }
 
-    @Operation(summary = "팀 캘린더", description = "팀의 캘린더 정보를 조회합니다.")
-    @GetMapping("/{id}/calendar")
-    public ResponseEntity<ApiEnvelope<List<TeamScheduleResponse>>> getTeamCalendar(
-            @Parameter(description = "팀 ID", example = "1")
-            @PathVariable Long id) {
-        
-        // 캘린더는 스케줄과 동일한 데이터를 반환
-        List<TeamScheduleResponse> schedules = teamService.getTeamSchedules(id);
-        return ResponseEntity.ok(ApiEnvelope.success(schedules));
-    }
-
     // Deprecated: 기존 오타 경로 지원 (302 리다이렉트)
     @GetMapping("/{id}/calender")
     public ResponseEntity<Void> getTeamCalendarRedirect(@PathVariable Long id) {

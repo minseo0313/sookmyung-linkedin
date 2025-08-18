@@ -43,7 +43,7 @@ class AdminServiceTest {
                 .department("컴퓨터학부")
                 .birthDate(LocalDate.of(2000, 1, 1))
                 .phoneNumber("01012345678")
-                .password("encodedPassword")
+                .passwordHash("encodedPassword")
                 .approvalStatus(ApprovalStatus.PENDING)
                 .build();
 

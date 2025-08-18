@@ -347,9 +347,8 @@ public class PostService {
         PostApplication application = PostApplication.builder()
                 .post(post)
                 .applicant(user)
-                .applicationText(request.getMessage())
-                .applicationStatus(ApplicationStatus.PENDING)
-                .submittedAt(LocalDateTime.now())
+                .message(request.getMessage())
+                .status(ApplicationStatus.PENDING)
                 .build();
 
         PostApplication savedApplication = postApplicationRepository.save(application);

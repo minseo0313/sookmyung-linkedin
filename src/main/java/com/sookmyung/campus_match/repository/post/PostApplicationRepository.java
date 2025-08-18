@@ -20,18 +20,24 @@ public interface PostApplicationRepository extends JpaRepository<PostApplication
     // 중첩 속성 표기를 사용한 메서드들
     List<PostApplication> findByPost_Id(Long postId);
     
+    // 페이징을 위한 메서드
+    Page<PostApplication> findByPost_Id(Long postId, Pageable pageable);
+    
     List<PostApplication> findByApplicant_Id(Long userId);
     
-    List<PostApplication> findByPost_IdAndApplicationStatus(Long postId, ApplicationStatus status);
+    List<PostApplication> findByPost_IdAndStatus(Long postId, ApplicationStatus status);
     
     @Query("SELECT pa FROM PostApplication pa WHERE " +
            "pa.post.id = :postId AND " +
-           "(:status IS NULL OR pa.applicationStatus = :status)")
+           "(:status IS NULL OR pa.status = :status)")
     Page<PostApplication> findByPost_IdAndStatus(@Param("postId") Long postId,
                                                @Param("status") ApplicationStatus status,
                                                Pageable pageable);
     
     boolean existsByPost_IdAndApplicant_Id(Long postId, Long userId);
+    
+    // 지원자 ID로 조회하는 메서드 (Optional 반환)
+    Optional<PostApplication> findByPost_IdAndApplicant_Id(Long postId, Long applicantId);
 
     // 추가 메서드들 (기존 서비스 코드와 호환성을 위해)
     List<PostApplication> findByPost(Post post);

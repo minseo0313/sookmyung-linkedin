@@ -29,7 +29,7 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     
     boolean existsByTeamAndUser(Team team, User user);
     
-    boolean existsByTeam_IdAndMemberRole(Long teamId, MemberRole memberRole);
+    boolean existsByTeam_IdAndRole(Long teamId, MemberRole role);
     
     void deleteByTeam_IdAndUser_Id(Long teamId, Long userId);
 }

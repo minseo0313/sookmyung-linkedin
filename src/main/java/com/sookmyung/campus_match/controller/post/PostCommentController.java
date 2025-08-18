@@ -63,9 +63,7 @@ public class PostCommentController {
             @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody PostCommentCreateRequest request) {
         
-        // TODO: currentUserId를 실제 사용자 식별자로 변환하는 로직 필요
-        String username = "user-" + currentUserId; // 임시 변환
-        PostCommentResponse comment = postCommentService.createComment(request, postId, username);
+        PostCommentResponse comment = postCommentService.createComment(request, postId, currentUserId.toString());
         URI location = URI.create("/api/posts/" + postId + "/comments/" + comment.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(comment));
     }

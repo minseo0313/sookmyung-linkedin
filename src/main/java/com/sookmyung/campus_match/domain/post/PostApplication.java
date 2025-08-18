@@ -23,21 +23,10 @@ import java.time.LocalDateTime;
 @Builder
 public class PostApplication extends BaseEntity {
 
-    @Lob
-    @Column(name = "application_text", columnDefinition = "TEXT")
-    private String applicationText;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "application_status", nullable = false)
-    private ApplicationStatus applicationStatus;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
     private ApplicationStatus status = ApplicationStatus.PENDING;
-
-    @Column(name = "submitted_at", nullable = false)
-    private LocalDateTime submittedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
@@ -51,44 +40,30 @@ public class PostApplication extends BaseEntity {
     @JoinColumn(name = "team_id")
     private Team team;
 
-    // 추가 필드들 (기존 서비스 코드와 호환성을 위해)
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
     @Column(name = "decided_at")
     private LocalDateTime decidedAt;
 
-    // TODO: DB 마이그레이션 시 제거할 필드들
-    // @Column(name = "user_id") - applicant_id와 중복, applicant_id만 사용
-
     // 도메인 메서드들
     public void accept() {
-        this.applicationStatus = ApplicationStatus.ACCEPTED;
         this.status = ApplicationStatus.ACCEPTED;
         this.decidedAt = LocalDateTime.now();
     }
 
     public void reject() {
-        this.applicationStatus = ApplicationStatus.REJECTED;
         this.status = ApplicationStatus.REJECTED;
         this.decidedAt = LocalDateTime.now();
     }
 
     public boolean isPending() {
-        return this.applicationStatus == ApplicationStatus.PENDING || this.status == ApplicationStatus.PENDING;
+        return this.status == ApplicationStatus.PENDING;
     }
 
     // 호환성 메서드들
-    public User getApplicant() {
-        return this.applicant;
-    }
-
     public String getMessage() {
-        return this.message != null ? this.message : this.applicationText;
-    }
-
-    public ApplicationStatus getStatus() {
-        return this.status != null ? this.status : this.applicationStatus;
+        return this.message;
     }
 
     public Long getPostId() {
