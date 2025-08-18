@@ -14,15 +14,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+
 /**
  * 게시글 댓글 관련 컨트롤러
  */
-@Tag(name = "Post Comment", description = "게시글 댓글 관련 API")
+@Tag(name = "Comments", description = "게시글 댓글 관련 API")
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -31,7 +32,7 @@ public class PostCommentController {
 
     private final PostCommentService postCommentService;
 
-    @Operation(summary = "댓글 생성", description = "게시글에 댓글을 작성합니다")
+    @Operation(summary = "댓글 생성", description = "게시글에 댓글을 작성합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "댓글 생성 성공",
                     content = @Content(examples = @ExampleObject(value = """
@@ -59,16 +60,17 @@ public class PostCommentController {
     public ResponseEntity<ApiEnvelope<PostCommentResponse>> createComment(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
+            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody PostCommentCreateRequest request) {
         
-        // TODO: 현재 사용자 정보를 가져와서 전달
-        PostCommentResponse comment = postCommentService.createComment(request, postId, "current-user");
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .header("Location", "/api/posts/" + postId + "/comments/" + comment.getId())
-                .body(ApiEnvelope.created(comment));
+        // TODO: currentUserId를 실제 사용자 식별자로 변환하는 로직 필요
+        String username = "user-" + currentUserId; // 임시 변환
+        PostCommentResponse comment = postCommentService.createComment(request, postId, username);
+        URI location = URI.create("/api/posts/" + postId + "/comments/" + comment.getId());
+        return ResponseEntity.created(location).body(ApiEnvelope.created(comment));
     }
 
-    @Operation(summary = "댓글 목록 조회", description = "게시글의 댓글 목록을 페이징하여 조회합니다")
+    @Operation(summary = "댓글 목록 조회", description = "게시글의 댓글 목록을 페이징하여 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터"),

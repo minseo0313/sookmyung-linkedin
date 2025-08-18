@@ -3,7 +3,6 @@ package com.sookmyung.campus_match.controller.post;
 import com.sookmyung.campus_match.dto.common.ApiEnvelope;
 import com.sookmyung.campus_match.dto.common.PageResponse;
 import com.sookmyung.campus_match.dto.post.*;
-import com.sookmyung.campus_match.dto.post.PostLikeCountResponse;
 import com.sookmyung.campus_match.service.post.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,15 +13,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
+
 /**
  * 게시글 관련 컨트롤러
  */
-@Tag(name = "Post", description = "게시글 관련 API")
+@Tag(name = "Posts", description = "게시글 관련 API")
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -31,7 +31,7 @@ public class PostController {
 
     private final PostService postService;
 
-    @Operation(summary = "게시글 생성", description = "새로운 게시글을 생성합니다")
+    @Operation(summary = "게시글 생성", description = "새로운 게시글을 생성합니다. 작성자만 가능.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "게시글 생성 성공",
                     content = @Content(examples = @ExampleObject(value = """
@@ -68,16 +68,15 @@ public class PostController {
     })
     @PostMapping
     public ResponseEntity<ApiEnvelope<PostDetailResponse>> createPost(
+            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody PostCreateRequest request) {
         
-        // TODO: 현재 사용자 정보를 가져와서 전달
-        PostDetailResponse post = postService.createPost(request, 1L);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .header("Location", "/api/posts/" + post.getId())
-                .body(ApiEnvelope.created(post));
+        PostDetailResponse post = postService.createPost(request, currentUserId);
+        URI location = URI.create("/api/posts/" + post.getId());
+        return ResponseEntity.created(location).body(ApiEnvelope.created(post));
     }
 
-    @Operation(summary = "게시글 수정", description = "게시글을 수정합니다")
+    @Operation(summary = "게시글 수정", description = "게시글을 수정합니다. 작성자만 가능.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "게시글 수정 성공"),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
@@ -88,31 +87,30 @@ public class PostController {
     public ResponseEntity<ApiEnvelope<PostDetailResponse>> updatePost(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long id,
+            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody PostUpdateRequest request) {
         
-        // TODO: 현재 사용자 정보를 가져와서 전달
-        PostDetailResponse post = postService.updatePost(id, request, 1L);
+        PostDetailResponse post = postService.updatePost(id, request, currentUserId);
         return ResponseEntity.ok(ApiEnvelope.success(post));
     }
 
-    @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다")
+    @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다. 작성자만 가능.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "게시글 삭제 성공"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiEnvelope<Void>> deletePost(
+    public ResponseEntity<Void> deletePost(
             @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestHeader("X-USER-ID") Long currentUserId) {
         
-        // TODO: 현재 사용자 정보를 가져와서 전달
-        postService.deletePost(id, 1L);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body(ApiEnvelope.okMessage());
+        postService.deletePost(id, currentUserId);
+        return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이징하여 조회합니다")
+    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이징하여 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터")
@@ -130,7 +128,7 @@ public class PostController {
         return ResponseEntity.ok(ApiEnvelope.success(posts));
     }
 
-    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다")
+    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. 조회수 증가.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "게시글 상세 조회 성공"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
@@ -144,7 +142,7 @@ public class PostController {
         return ResponseEntity.ok(ApiEnvelope.success(post));
     }
 
-    @Operation(summary = "게시글 좋아요", description = "게시글에 좋아요를 추가합니다 (멱등성 보장)")
+    @Operation(summary = "게시글 좋아요", description = "게시글에 좋아요를 추가합니다. 중복 호출 시 무시(멱등성 보장).")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "좋아요 성공"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
@@ -152,14 +150,14 @@ public class PostController {
     @PostMapping("/{id}/like")
     public ResponseEntity<ApiEnvelope<Void>> likePost(
             @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestHeader("X-USER-ID") Long currentUserId) {
         
-        // TODO: 현재 사용자 정보를 가져와서 전달
-        postService.likePost(id, 1L);
+        postService.likePost(id, currentUserId);
         return ResponseEntity.ok(ApiEnvelope.okMessage());
     }
 
-    @Operation(summary = "게시글 좋아요 수 조회", description = "게시글의 좋아요 수를 조회합니다")
+    @Operation(summary = "게시글 좋아요 수 조회", description = "게시글의 좋아요 수를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "좋아요 수 조회 성공",
                     content = @Content(examples = @ExampleObject(value = """
