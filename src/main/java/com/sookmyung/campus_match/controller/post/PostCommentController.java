@@ -54,7 +54,8 @@ public class PostCommentController {
                             }
                             """))),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/{postId}/comments")
     public ResponseEntity<ApiEnvelope<PostCommentResponse>> createComment(
@@ -72,7 +73,8 @@ public class PostCommentController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터"),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/{postId}/comments")
     public ResponseEntity<ApiEnvelope<PageResponse<PostCommentResponse>>> getComments(

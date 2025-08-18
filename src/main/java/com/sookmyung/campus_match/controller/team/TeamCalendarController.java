@@ -67,8 +67,11 @@ public class TeamCalendarController {
                                             }
                                             """)
                     })),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "팀 멤버가 아님"),
-            @ApiResponse(responseCode = "404", description = "팀을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "팀을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/{id}/calendar")
     public ResponseEntity<ApiEnvelope<TeamCalendarResponse>> getTeamCalendar(
@@ -104,8 +107,11 @@ public class TeamCalendarController {
                                             """)
                     })),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 (시작 시간이 종료 시간보다 늦음)"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "팀 멤버가 아님"),
-            @ApiResponse(responseCode = "404", description = "팀 또는 사용자를 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "팀 또는 사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "중복된 이벤트"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/{id}/calendar")
     public ResponseEntity<ApiEnvelope<TeamEventResponse>> createTeamCalendarEvent(

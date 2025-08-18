@@ -85,7 +85,8 @@ public class AuthController {
                             }
                             """))),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/login")
     public ResponseEntity<ApiEnvelope<TokenResponse>> login(
@@ -98,7 +99,8 @@ public class AuthController {
     @Operation(summary = "로그아웃", description = "사용자 로그아웃을 처리합니다")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "로그아웃 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/logout")
     public ResponseEntity<ApiEnvelope<Void>> logout() {
@@ -112,7 +114,8 @@ public class AuthController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "회원 탈퇴 성공"),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @DeleteMapping("/delete")
     public ResponseEntity<ApiEnvelope<Void>> deleteUser() {
@@ -140,7 +143,8 @@ public class AuthController {
                               "timestamp": "2025-01-27T10:30:00Z"
                             }
                             """))),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/{id}/badge")
     public ResponseEntity<ApiEnvelope<BadgeResponse>> getUserBadge(
@@ -155,7 +159,8 @@ public class AuthController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "비밀번호 확인 성공"),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
-            @ApiResponse(responseCode = "401", description = "비밀번호 불일치")
+            @ApiResponse(responseCode = "401", description = "비밀번호 불일치"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/verify-password")
     public ResponseEntity<ApiEnvelope<Void>> verifyPassword(

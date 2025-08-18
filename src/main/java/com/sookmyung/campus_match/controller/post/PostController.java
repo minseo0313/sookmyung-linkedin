@@ -113,7 +113,8 @@ public class PostController {
     @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이징하여 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터")
+            @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping
     public ResponseEntity<ApiEnvelope<PageResponse<PostSummaryResponse>>> getPosts(
@@ -131,7 +132,8 @@ public class PostController {
     @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. 조회수 증가.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "게시글 상세 조회 성공"),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/{id}")
     public ResponseEntity<ApiEnvelope<PostDetailResponse>> getPost(
@@ -145,7 +147,8 @@ public class PostController {
     @Operation(summary = "게시글 좋아요", description = "게시글에 좋아요를 추가합니다. 중복 호출 시 무시(멱등성 보장).")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "좋아요 성공"),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/{id}/like")
     public ResponseEntity<ApiEnvelope<Void>> likePost(
@@ -172,7 +175,8 @@ public class PostController {
                               "timestamp": "2025-01-27T10:30:00Z"
                             }
                             """))),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/{id}/likes/count")
     public ResponseEntity<ApiEnvelope<PostLikeCountResponse>> getPostLikeCount(

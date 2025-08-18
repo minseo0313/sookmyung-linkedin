@@ -25,8 +25,8 @@ public class ApiEnvelope<T> {
     public static <T> ApiEnvelope<T> created(T data) {
         return ApiEnvelope.<T>builder()
                 .success(true)
-                .code("OK")
-                .message("success")
+                .code("CREATED")
+                .message("created")
                 .data(data)
                 .timestamp(Instant.now())
                 .build();

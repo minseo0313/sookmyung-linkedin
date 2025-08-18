@@ -30,7 +30,9 @@ public class SearchController {
     @Operation(summary = "사용자 검색", description = "키워드로 사용자를 검색합니다")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "사용자 검색 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 검색어")
+            @ApiResponse(responseCode = "400", description = "잘못된 검색어"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/users")
     public ResponseEntity<ApiEnvelope<PageResponse<UserSearchResponse>>> searchUsers(
@@ -50,7 +52,9 @@ public class SearchController {
     @Operation(summary = "게시글 검색", description = "키워드로 게시글을 검색합니다")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "게시글 검색 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 검색어")
+            @ApiResponse(responseCode = "400", description = "잘못된 검색어"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/posts")
     public ResponseEntity<ApiEnvelope<PageResponse<PostSearchResponse>>> searchPosts(

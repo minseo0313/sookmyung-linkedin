@@ -89,8 +89,10 @@ public class PostApplicationController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "지원 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/{id}/applications")
     public ResponseEntity<ApiEnvelope<PageResponse<PostApplicationResponse>>> getApplications(
@@ -111,9 +113,11 @@ public class PostApplicationController {
     @Operation(summary = "지원 수락", description = "지원을 수락합니다. 게시글 작성자만 가능.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "지원 수락 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "404", description = "게시글 또는 지원을 찾을 수 없음"),
-            @ApiResponse(responseCode = "409", description = "이미 처리된 지원")
+            @ApiResponse(responseCode = "409", description = "이미 처리된 지원"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/{id}/applications/{applicantId}/accept")
     public ResponseEntity<ApiEnvelope<Void>> acceptApplication(
@@ -130,9 +134,11 @@ public class PostApplicationController {
     @Operation(summary = "지원 거절", description = "지원을 거절합니다. 게시글 작성자만 가능.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "지원 거절 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "404", description = "게시글 또는 지원을 찾을 수 없음"),
-            @ApiResponse(responseCode = "409", description = "이미 처리된 지원")
+            @ApiResponse(responseCode = "409", description = "이미 처리된 지원"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/{id}/applications/{applicantId}/reject")
     public ResponseEntity<ApiEnvelope<Void>> rejectApplication(

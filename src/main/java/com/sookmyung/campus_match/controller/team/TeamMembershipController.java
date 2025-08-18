@@ -50,8 +50,12 @@ public class TeamMembershipController {
                                             }
                                             """)
                     })),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
             @ApiResponse(responseCode = "404", description = "팀 또는 사용자를 찾을 수 없음"),
-            @ApiResponse(responseCode = "409", description = "이미 팀 멤버이거나 팀 인원이 가득 참")
+            @ApiResponse(responseCode = "409", description = "이미 팀 멤버이거나 팀 인원이 가득 참"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/{id}/accept")
     public ResponseEntity<ApiEnvelope<TeamMembershipResponse>> acceptInvite(

@@ -17,11 +17,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.http.HttpStatus;
 
 @Tag(name = "관리자", description = "관리자 기능 API")
 @RestController
@@ -32,6 +31,12 @@ public class AdminController {
     private final AdminService adminService;
 
     @Operation(summary = "전체 회원 목록 조회", description = "승인/탈퇴 대상 확인용 회원 목록을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "회원 목록 조회 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 페이징 파라미터"),
+        @ApiResponse(responseCode = "401", description = "인증 실패"),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 없음")
+    })
     @GetMapping("/users")
     public ResponseEntity<ApiEnvelope<Page<Object>>> getAllUsers(Pageable pageable) {
         // TODO: 실제 회원 목록 조회 로직 구현 필요
@@ -66,8 +71,10 @@ public class AdminController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "권한 변경 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
         @ApiResponse(responseCode = "403", description = "관리자 권한 없음"),
-        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PatchMapping("/users/{id}/role")
     public ResponseEntity<ApiEnvelope<String>> changeUserRole(
@@ -81,26 +88,42 @@ public class AdminController {
     }
 
     @Operation(summary = "회원 강제 탈퇴", description = "신고 누적 회원 탈퇴 처리를 합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "회원 강제 탈퇴 성공"),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 없음"),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<ApiEnvelope<String>> deleteUser(
+    public ResponseEntity<Void> deleteUser(
             @Parameter(description = "사용자 ID", example = "1")
             @PathVariable Long id) {
         
         adminService.deleteUser(id);
-        return ResponseEntity.ok(ApiEnvelope.success("사용자가 탈퇴 처리되었습니다."));
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "게시글 삭제", description = "이상 게시글을 삭제합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "게시글 삭제 성공"),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 없음"),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
     @DeleteMapping("/posts/{id}")
-    public ResponseEntity<ApiEnvelope<String>> deletePost(
+    public ResponseEntity<Void> deletePost(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long id) {
         
         adminService.deletePost(id);
-        return ResponseEntity.ok(ApiEnvelope.success("게시글이 삭제되었습니다."));
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "전체 공지 등록", description = "시스템 점검 등 공지사항을 등록합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "공지 등록 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 없음"),
+        @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @PostMapping("/notices")
     public ResponseEntity<ApiEnvelope<SystemNoticeResponse>> createNotice(
             @Valid @RequestBody SystemNoticeRequest request) {
@@ -108,10 +131,14 @@ public class AdminController {
         // TODO: 실제로는 SecurityContext에서 현재 로그인한 관리자 정보를 가져와야 함
         String adminUsername = "admin"; // 임시 값
         SystemNoticeResponse notice = adminService.createNotice(request, adminUsername);
-        return ResponseEntity.ok(ApiEnvelope.success(notice));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiEnvelope.created(notice));
     }
 
     @Operation(summary = "공지 상세 조회", description = "공지사항 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "공지 조회 성공"),
+        @ApiResponse(responseCode = "404", description = "공지를 찾을 수 없음")
+    })
     @GetMapping("/notices/{id}")
     public ResponseEntity<ApiEnvelope<SystemNoticeResponse>> getNotice(
             @Parameter(description = "공지 ID", example = "1")
@@ -122,6 +149,10 @@ public class AdminController {
     }
 
     @Operation(summary = "신고 메시지 확인", description = "신고된 메시지 리스트를 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "신고 메시지 조회 성공"),
+        @ApiResponse(responseCode = "403", description = "관리자 권한 없음")
+    })
     @GetMapping("/reports/messages")
     public ResponseEntity<ApiEnvelope<List<MessageReportResponse>>> getReportedMessages() {
         List<MessageReportResponse> reports = adminService.getReportedMessages();
@@ -129,6 +160,9 @@ public class AdminController {
     }
 
     @Operation(summary = "시스템 통계", description = "방문자, 회원 수 등 통계를 확인합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "통계 조회 성공")
+    })
     @GetMapping("/statistics")
     public ResponseEntity<ApiEnvelope<StatisticsResponse>> getStatistics() {
         StatisticsResponse statistics = adminService.getStatistics();

@@ -63,7 +63,9 @@ public class ProfileController {
                             }
                             """))),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
-            @ApiResponse(responseCode = "409", description = "이미 프로필이 존재함")
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "409", description = "이미 프로필이 존재함"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/profiles")
     public ResponseEntity<ApiEnvelope<ProfileResponse>> createProfile(
@@ -80,8 +82,10 @@ public class ProfileController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PutMapping("/profiles/{id}")
     public ResponseEntity<ApiEnvelope<ProfileResponse>> updateProfile(
@@ -98,8 +102,10 @@ public class ProfileController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PatchMapping("/profiles/{id}")
     public ResponseEntity<ApiEnvelope<ProfileResponse>> patchProfile(
@@ -115,7 +121,8 @@ public class ProfileController {
     @Operation(summary = "프로필 조회", description = "프로필을 조회합니다")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
-            @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/profiles/{id}")
     public ResponseEntity<ApiEnvelope<ProfileResponse>> getProfile(
@@ -148,7 +155,9 @@ public class ProfileController {
                               ],
                               "timestamp": "2025-01-27T10:30:00Z"
                             }
-                            """)))
+                            """))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/interests")
     public ResponseEntity<ApiEnvelope<List<com.sookmyung.campus_match.dto.profile.InterestResponse>>> getInterests() {
@@ -160,7 +169,8 @@ public class ProfileController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/posts/mine")
     public ResponseEntity<ApiEnvelope<PageResponse<PostSummaryResponse>>> getMyPosts(

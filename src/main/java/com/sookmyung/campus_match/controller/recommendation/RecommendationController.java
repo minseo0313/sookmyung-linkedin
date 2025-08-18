@@ -6,6 +6,8 @@ import com.sookmyung.campus_match.dto.user.UserResponse;
 import com.sookmyung.campus_match.service.recommendation.RecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,13 @@ public class RecommendationController {
     private final RecommendationService recommendationService;
 
     @Operation(summary = "AI 사용자 추천", description = "관심사/자기소개 기반으로 추천 사용자 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "AI 추천 사용자 목록 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 페이징 파라미터"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping
     public ResponseEntity<ApiEnvelope<Page<UserResponse>>> getRecommendedUsers(
             @Parameter(description = "페이징 정보", example = "page=0&size=10&sort=score,desc")
@@ -38,6 +47,12 @@ public class RecommendationController {
     }
 
     @Operation(summary = "맞춤 추천 사용자", description = "특정 사용자에 대한 맞춤 추천 사용자 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "맞춤 추천 사용자 목록 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping("/users/{userId}")
     public ResponseEntity<ApiEnvelope<List<UserResponse>>> getRecommendedUsersForUser(
             @Parameter(description = "사용자 ID", example = "1")
@@ -51,6 +66,12 @@ public class RecommendationController {
     }
 
     @Operation(summary = "관심사 기반 추천", description = "특정 관심사 기반으로 사용자를 추천합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "관심사 기반 추천 사용자 목록 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 관심사 타입"),
+            @ApiResponse(responseCode = "404", description = "관심사를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping("/interests/{interestType}")
     public ResponseEntity<ApiEnvelope<List<UserResponse>>> getUsersByInterest(
             @Parameter(description = "관심사 타입", example = "PROGRAMMING")
@@ -64,6 +85,12 @@ public class RecommendationController {
     }
 
     @Operation(summary = "학과 기반 추천", description = "같은 학과 사용자를 추천합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "학과 기반 추천 사용자 목록 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 학과명"),
+            @ApiResponse(responseCode = "404", description = "학과를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     @GetMapping("/department/{department}")
     public ResponseEntity<ApiEnvelope<List<UserResponse>>> getUsersByDepartment(
             @Parameter(description = "학과명", example = "컴퓨터학부")

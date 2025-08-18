@@ -22,6 +22,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @Tag(name = "팀", description = "팀 관리 관련 API")
 @RestController
@@ -32,6 +34,12 @@ public class TeamController {
     private final TeamService teamService;
 
     @Operation(summary = "팀 생성", description = "새로운 팀을 생성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "팀 생성 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "403", description = "승인되지 않은 사용자"),
+            @ApiResponse(responseCode = "409", description = "이미 존재하는 팀")
+    })
     @PostMapping
     @RequiresApproval(message = "승인된 사용자만 팀을 생성할 수 있습니다.")
     public ResponseEntity<ApiEnvelope<TeamResponse>> createTeam(
@@ -46,10 +54,14 @@ public class TeamController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         TeamResponse team = teamService.createTeam(teamName, description, maxMembers, postId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiEnvelope.created(team));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiEnvelope.created(team));
     }
 
     @Operation(summary = "팀 조회", description = "특정 팀의 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "팀 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "팀을 찾을 수 없음")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ApiEnvelope<TeamResponse>> getTeam(
             @Parameter(description = "팀 ID", example = "1")
@@ -60,6 +72,10 @@ public class TeamController {
     }
 
     @Operation(summary = "팀 목록 조회", description = "팀 목록을 페이징하여 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "팀 목록 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 페이징 파라미터")
+    })
     @GetMapping
     public ResponseEntity<ApiEnvelope<Page<TeamResponse>>> getTeams(
             @Parameter(description = "페이징 정보", example = "page=0&size=10&sort=createdAt,desc")
@@ -70,6 +86,11 @@ public class TeamController {
     }
 
     @Operation(summary = "내 팀 목록", description = "현재 사용자가 속한 팀 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "내 팀 목록 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
+    })
     @GetMapping("/my")
     public ResponseEntity<ApiEnvelope<List<TeamResponse>>> getMyTeams(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -79,6 +100,13 @@ public class TeamController {
     }
 
     @Operation(summary = "팀 멤버 추가", description = "팀에 새로운 멤버를 추가합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "팀 멤버 추가 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (팀장만 가능)"),
+            @ApiResponse(responseCode = "404", description = "팀 또는 사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "이미 팀 멤버이거나 팀 인원이 가득 참")
+    })
     @PostMapping("/{id}/members")
     @RequiresApproval(message = "승인된 사용자만 팀 멤버를 추가할 수 있습니다.")
     public ResponseEntity<ApiEnvelope<String>> addMember(
@@ -93,6 +121,12 @@ public class TeamController {
     }
 
     @Operation(summary = "팀 멤버 제거", description = "팀에서 멤버를 제거합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "팀 멤버 제거 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (팀장만 가능)"),
+            @ApiResponse(responseCode = "404", description = "팀 또는 사용자를 찾을 수 없음")
+    })
     @DeleteMapping("/{id}/members/{userId}")
     @RequiresApproval(message = "승인된 사용자만 팀 멤버를 제거할 수 있습니다.")
     public ResponseEntity<ApiEnvelope<String>> removeMember(
@@ -107,6 +141,12 @@ public class TeamController {
     }
 
     @Operation(summary = "팀 스케줄 생성", description = "팀에 새로운 스케줄을 생성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "팀 스케줄 생성 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (검증 실패)"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (팀장만 가능)"),
+            @ApiResponse(responseCode = "404", description = "팀을 찾을 수 없음")
+    })
     @PostMapping("/{id}/schedules")
     @RequiresApproval(message = "승인된 사용자만 팀 스케줄을 생성할 수 있습니다.")
     public ResponseEntity<ApiEnvelope<TeamScheduleResponse>> createSchedule(
@@ -116,10 +156,14 @@ public class TeamController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         TeamScheduleResponse schedule = teamService.createSchedule(id, request, userDetails.getUsername());
-        return ResponseEntity.ok(ApiEnvelope.created(schedule));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiEnvelope.created(schedule));
     }
 
     @Operation(summary = "팀 스케줄 조회", description = "팀의 스케줄 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "팀 스케줄 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "팀을 찾을 수 없음")
+    })
     @GetMapping("/{id}/schedules")
     public ResponseEntity<ApiEnvelope<List<TeamScheduleResponse>>> getTeamSchedules(
             @Parameter(description = "팀 ID", example = "1")
@@ -130,6 +174,13 @@ public class TeamController {
     }
 
     @Operation(summary = "스케줄 할당", description = "스케줄에 팀원을 할당합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "스케줄 할당 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (검증 실패)"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "스케줄 또는 사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "이미 할당된 스케줄")
+    })
     @PostMapping("/schedules/{scheduleId}/assign")
     @RequiresApproval(message = "승인된 사용자만 스케줄을 할당할 수 있습니다.")
     public ResponseEntity<ApiEnvelope<ScheduleAssignmentResponse>> assignSchedule(
@@ -139,10 +190,15 @@ public class TeamController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         ScheduleAssignmentResponse assignment = teamService.assignSchedule(scheduleId, request, userDetails.getUsername());
-        return ResponseEntity.ok(ApiEnvelope.created(assignment));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiEnvelope.created(assignment));
     }
 
     @Operation(summary = "팀 비활성화", description = "팀을 비활성화합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "팀 비활성화 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (팀장만 가능)"),
+            @ApiResponse(responseCode = "404", description = "팀을 찾을 수 없음")
+    })
     @PatchMapping("/{id}/deactivate")
     @RequiresApproval(message = "승인된 사용자만 팀을 비활성화할 수 있습니다.")
     public ResponseEntity<ApiEnvelope<String>> deactivateTeam(

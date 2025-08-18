@@ -72,7 +72,9 @@ public class MessageController {
     @Operation(summary = "메시지 스레드 목록", description = "받은 메시지/대화 목록을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "메시지 목록 조회 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터")
+            @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping
     public ResponseEntity<ApiEnvelope<List<MessageThreadResponse>>> getMessages(
@@ -85,7 +87,9 @@ public class MessageController {
     @Operation(summary = "메시지 상세 조회", description = "특정 메시지의 상세 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "메시지 상세 조회 성공"),
-            @ApiResponse(responseCode = "404", description = "메시지를 찾을 수 없음")
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "메시지를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @GetMapping("/{id}")
     public ResponseEntity<ApiEnvelope<List<MessageResponse>>> getMessage(
@@ -101,8 +105,10 @@ public class MessageController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "답장 성공"),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "404", description = "메시지를 찾을 수 없음")
+            @ApiResponse(responseCode = "404", description = "메시지를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/{id}/reply")
     public ResponseEntity<ApiEnvelope<MessageResponse>> replyToMessage(
@@ -120,7 +126,9 @@ public class MessageController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "신고 성공"),
             @ApiResponse(responseCode = "400", description = "검증 실패"),
-            @ApiResponse(responseCode = "404", description = "메시지를 찾을 수 없음")
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "메시지를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     @PostMapping("/{id}/report")
     public ResponseEntity<ApiEnvelope<MessageReportResponse>> reportMessage(
