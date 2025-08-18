@@ -210,7 +210,7 @@ public class PostService {
      * 게시글 생성
      */
     @Transactional
-    public Post createPost(PostCreateRequest request, Long authorId) {
+    public com.sookmyung.campus_match.dto.post.PostDetailResponse createPost(PostCreateRequest request, Long authorId) {
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + authorId));
         
@@ -230,16 +230,22 @@ public class PostService {
                 .isDeleted(false)
                 .build();
         
-        return postRepository.save(post);
+        Post savedPost = postRepository.save(post);
+        return com.sookmyung.campus_match.dto.post.PostDetailResponse.from(savedPost);
     }
 
     /**
      * 게시글 수정
      */
     @Transactional
-    public Post updatePost(Long postId, PostUpdateRequest request) {
+    public com.sookmyung.campus_match.dto.post.PostDetailResponse updatePost(Long postId, PostUpdateRequest request, Long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+        
+        // 권한 확인
+        if (!post.getAuthor().getId().equals(userId)) {
+            throw new IllegalArgumentException("게시글 작성자만 수정할 수 있습니다.");
+        }
         
         if (request.getTitle() != null) {
             post.setTitle(request.getTitle());
@@ -263,21 +269,27 @@ public class PostService {
             post.setLinkUrl(request.getLinkUrl());
         }
         
-        return postRepository.save(post);
+        Post updatedPost = postRepository.save(post);
+        return com.sookmyung.campus_match.dto.post.PostDetailResponse.from(updatedPost);
     }
 
     /**
      * 게시글 조회
      */
-    public Optional<Post> getPost(Long postId) {
-        return postRepository.findById(postId);
+    public com.sookmyung.campus_match.dto.post.PostDetailResponse getPost(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+        return com.sookmyung.campus_match.dto.post.PostDetailResponse.from(post);
     }
 
     /**
      * 게시글 목록 조회
      */
-    public Page<Post> getPosts(Pageable pageable) {
-        return postRepository.findAllActiveAndOpen(pageable);
+    public com.sookmyung.campus_match.dto.common.PageResponse<com.sookmyung.campus_match.dto.post.PostSummaryResponse> getPosts(Integer page, Integer size, String sort) {
+        // TODO: PageUtils를 사용한 페이징 처리
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
+        Page<Post> posts = postRepository.findAllActiveAndOpen(pageable);
+        return com.sookmyung.campus_match.dto.common.PageResponse.from(posts.map(com.sookmyung.campus_match.dto.post.PostSummaryResponse::from));
     }
 
     /**
@@ -289,16 +301,17 @@ public class PostService {
     }
 
     @Transactional
-    public void likePost(Long postId, String username) {
-        User user = userRepository.findByStudentId(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+    public void likePost(Long postId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
 
         // 이미 좋아요를 눌렀는지 확인
         if (postLikeRepository.existsByPostAndUser(post, user)) {
-            throw new IllegalArgumentException("이미 좋아요를 눌렀습니다.");
+            // 이미 좋아요를 눌렀으면 무시 (멱등성)
+            return;
         }
 
         PostLike like = PostLike.builder()
@@ -311,14 +324,11 @@ public class PostService {
         postRepository.save(post);
     }
 
-    public PostLikeCountResponse getLikeCount(Long postId) {
+    public com.sookmyung.campus_match.dto.post.PostLikeCountResponse getPostLikeCount(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
 
-        return PostLikeCountResponse.builder()
-                .postId(postId)
-                .likeCount(post.getLikeCount())
-                .build();
+        return com.sookmyung.campus_match.dto.post.PostLikeCountResponse.of(postId, post.getLikeCount() != null ? post.getLikeCount().longValue() : 0L);
     }
 
     @Transactional
@@ -422,9 +432,9 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long postId, String username) {
-        User user = userRepository.findByStudentId(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + username));
+    public void deletePost(Long postId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));

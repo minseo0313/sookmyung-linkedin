@@ -6,7 +6,7 @@ import com.sookmyung.campus_match.dto.auth.BadgeResponse;
 import com.sookmyung.campus_match.dto.auth.TokenResponse;
 import com.sookmyung.campus_match.dto.auth.UserLoginRequest;
 import com.sookmyung.campus_match.dto.auth.UserRegisterRequest;
-import com.sookmyung.campus_match.dto.auth.UserResponse;
+import com.sookmyung.campus_match.dto.user.UserResponse;
 import com.sookmyung.campus_match.dto.auth.VerifyPasswordRequest;
 import com.sookmyung.campus_match.exception.ApiException;
 import com.sookmyung.campus_match.exception.ErrorCode;

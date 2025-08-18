@@ -8,3 +8,8 @@ spring:
 
   flyway:
     enabled: false # Flyway 사용 안 할 경우 비활성화
+
+jwt:
+  secret: your-secret-key-here-make-it-long-and-secure-for-production-use-a-very-long-secret-key-at-least-256-bits
+  access-token-expiration: 3600 # 1 hour in seconds
+  refresh-token-expiration: 86400 # 24 hours in seconds

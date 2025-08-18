@@ -1,12 +1,12 @@
 package com.sookmyung.campus_match.dto.search;
 
-import com.sookmyung.campus_match.domain.post.Post;
-import io.swagger.v3.oas.annotations.media.Schema;
+import com.sookmyung.campus_match.domain.common.enums.PostCategory;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 /**
- * 게시글 검색 결과 응답 DTO.
- * - 목록/검색 시 제목만 노출
+ * 게시글 검색 응답 DTO
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -14,16 +14,37 @@ import lombok.*;
 @Builder
 public class PostSearchResponse {
 
-    @Schema(description = "게시글 ID", example = "10")
     private Long id;
-
-    @Schema(description = "제목", example = "백엔드 개발자 모집")
+    private PostCategory category;
     private String title;
+    private String content;
+    private Integer recruitmentCount;
+    private String duration;
+    private Boolean isClosed;
+    private Integer viewCount;
+    private Integer likeCount;
+    private Integer commentCount;
+    private Long authorId;
+    private String authorName;
+    private String authorDepartment;
+    private LocalDateTime createdAt;
 
-    public static PostSearchResponse from(Post post) {
+    public static PostSearchResponse from(com.sookmyung.campus_match.domain.post.Post post) {
         return PostSearchResponse.builder()
                 .id(post.getId())
+                .category(post.getCategory())
                 .title(post.getTitle())
+                .content(post.getContent())
+                .recruitmentCount(post.getRecruitmentCount())
+                .duration(post.getDuration())
+                .isClosed(post.isClosed())
+                .viewCount(post.getViewCount())
+                .likeCount(post.getLikeCount())
+                .commentCount(post.getCommentCount())
+                .authorId(post.getAuthorId())
+                .authorName(post.getAuthor() != null ? post.getAuthor().getName() : null)
+                .authorDepartment(post.getAuthor() != null ? post.getAuthor().getDepartment() : null)
+                .createdAt(post.getCreatedAt())
                 .build();
     }
 }

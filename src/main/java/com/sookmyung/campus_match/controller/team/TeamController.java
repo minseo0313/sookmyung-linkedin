@@ -1,6 +1,6 @@
 package com.sookmyung.campus_match.controller.team;
 
-import com.sookmyung.campus_match.dto.common.ApiResponse;
+import com.sookmyung.campus_match.dto.common.ApiEnvelope;
 import com.sookmyung.campus_match.dto.team.TeamResponse;
 import com.sookmyung.campus_match.dto.schedule.TeamScheduleRequest;
 import com.sookmyung.campus_match.dto.schedule.TeamScheduleResponse;
@@ -34,7 +34,7 @@ public class TeamController {
     @Operation(summary = "팀 생성", description = "새로운 팀을 생성합니다.")
     @PostMapping
     @RequiresApproval(message = "승인된 사용자만 팀을 생성할 수 있습니다.")
-    public ResponseEntity<ApiResponse<TeamResponse>> createTeam(
+    public ResponseEntity<ApiEnvelope<TeamResponse>> createTeam(
             @Parameter(description = "팀명", example = "프로젝트 A팀")
             @RequestParam String teamName,
             @Parameter(description = "팀 설명", example = "웹 개발 프로젝트를 진행하는 팀입니다.")
@@ -46,42 +46,42 @@ public class TeamController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         TeamResponse team = teamService.createTeam(teamName, description, maxMembers, postId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.created(team));
+        return ResponseEntity.ok(ApiEnvelope.created(team));
     }
 
     @Operation(summary = "팀 조회", description = "특정 팀의 정보를 조회합니다.")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<TeamResponse>> getTeam(
+    public ResponseEntity<ApiEnvelope<TeamResponse>> getTeam(
             @Parameter(description = "팀 ID", example = "1")
             @PathVariable Long id) {
         
         TeamResponse team = teamService.getTeam(id);
-        return ResponseEntity.ok(ApiResponse.success(team));
+        return ResponseEntity.ok(ApiEnvelope.success(team));
     }
 
     @Operation(summary = "팀 목록 조회", description = "팀 목록을 페이징하여 조회합니다.")
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<TeamResponse>>> getTeams(
+    public ResponseEntity<ApiEnvelope<Page<TeamResponse>>> getTeams(
             @Parameter(description = "페이징 정보", example = "page=0&size=10&sort=createdAt,desc")
             Pageable pageable) {
         
         Page<TeamResponse> teams = teamService.getTeams(pageable);
-        return ResponseEntity.ok(ApiResponse.success(teams));
+        return ResponseEntity.ok(ApiEnvelope.success(teams));
     }
 
     @Operation(summary = "내 팀 목록", description = "현재 사용자가 속한 팀 목록을 조회합니다.")
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<TeamResponse>>> getMyTeams(
+    public ResponseEntity<ApiEnvelope<List<TeamResponse>>> getMyTeams(
             @AuthenticationPrincipal UserDetails userDetails) {
         
         List<TeamResponse> teams = teamService.getUserTeams(userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success(teams));
+        return ResponseEntity.ok(ApiEnvelope.success(teams));
     }
 
     @Operation(summary = "팀 멤버 추가", description = "팀에 새로운 멤버를 추가합니다.")
     @PostMapping("/{id}/members")
     @RequiresApproval(message = "승인된 사용자만 팀 멤버를 추가할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> addMember(
+    public ResponseEntity<ApiEnvelope<String>> addMember(
             @Parameter(description = "팀 ID", example = "1")
             @PathVariable Long id,
             @Parameter(description = "추가할 사용자 ID", example = "2")
@@ -89,13 +89,13 @@ public class TeamController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         teamService.addMember(id, userId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("팀 멤버가 추가되었습니다."));
+        return ResponseEntity.ok(ApiEnvelope.success("팀 멤버가 추가되었습니다."));
     }
 
     @Operation(summary = "팀 멤버 제거", description = "팀에서 멤버를 제거합니다.")
     @DeleteMapping("/{id}/members/{userId}")
     @RequiresApproval(message = "승인된 사용자만 팀 멤버를 제거할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> removeMember(
+    public ResponseEntity<ApiEnvelope<String>> removeMember(
             @Parameter(description = "팀 ID", example = "1")
             @PathVariable Long id,
             @Parameter(description = "제거할 사용자 ID", example = "2")
@@ -103,66 +103,66 @@ public class TeamController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         teamService.removeMember(id, userId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("팀 멤버가 제거되었습니다."));
+        return ResponseEntity.ok(ApiEnvelope.success("팀 멤버가 제거되었습니다."));
     }
 
     @Operation(summary = "팀 스케줄 생성", description = "팀에 새로운 스케줄을 생성합니다.")
     @PostMapping("/{id}/schedules")
     @RequiresApproval(message = "승인된 사용자만 팀 스케줄을 생성할 수 있습니다.")
-    public ResponseEntity<ApiResponse<TeamScheduleResponse>> createSchedule(
+    public ResponseEntity<ApiEnvelope<TeamScheduleResponse>> createSchedule(
             @Parameter(description = "팀 ID", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody TeamScheduleRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         
         TeamScheduleResponse schedule = teamService.createSchedule(id, request, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.created(schedule));
+        return ResponseEntity.ok(ApiEnvelope.created(schedule));
     }
 
     @Operation(summary = "팀 스케줄 조회", description = "팀의 스케줄 목록을 조회합니다.")
     @GetMapping("/{id}/schedules")
-    public ResponseEntity<ApiResponse<List<TeamScheduleResponse>>> getTeamSchedules(
+    public ResponseEntity<ApiEnvelope<List<TeamScheduleResponse>>> getTeamSchedules(
             @Parameter(description = "팀 ID", example = "1")
             @PathVariable Long id) {
         
         List<TeamScheduleResponse> schedules = teamService.getTeamSchedules(id);
-        return ResponseEntity.ok(ApiResponse.success(schedules));
+        return ResponseEntity.ok(ApiEnvelope.success(schedules));
     }
 
     @Operation(summary = "스케줄 할당", description = "스케줄에 팀원을 할당합니다.")
     @PostMapping("/schedules/{scheduleId}/assign")
     @RequiresApproval(message = "승인된 사용자만 스케줄을 할당할 수 있습니다.")
-    public ResponseEntity<ApiResponse<ScheduleAssignmentResponse>> assignSchedule(
+    public ResponseEntity<ApiEnvelope<ScheduleAssignmentResponse>> assignSchedule(
             @Parameter(description = "스케줄 ID", example = "1")
             @PathVariable Long scheduleId,
             @Valid @RequestBody ScheduleAssignmentRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         
         ScheduleAssignmentResponse assignment = teamService.assignSchedule(scheduleId, request, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.created(assignment));
+        return ResponseEntity.ok(ApiEnvelope.created(assignment));
     }
 
     @Operation(summary = "팀 비활성화", description = "팀을 비활성화합니다.")
     @PatchMapping("/{id}/deactivate")
     @RequiresApproval(message = "승인된 사용자만 팀을 비활성화할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> deactivateTeam(
+    public ResponseEntity<ApiEnvelope<String>> deactivateTeam(
             @Parameter(description = "팀 ID", example = "1")
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         
         teamService.deactivateTeam(id, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("팀이 비활성화되었습니다."));
+        return ResponseEntity.ok(ApiEnvelope.success("팀이 비활성화되었습니다."));
     }
 
     @Operation(summary = "팀 캘린더", description = "팀의 캘린더 정보를 조회합니다.")
     @GetMapping("/{id}/calendar")
-    public ResponseEntity<ApiResponse<List<TeamScheduleResponse>>> getTeamCalendar(
+    public ResponseEntity<ApiEnvelope<List<TeamScheduleResponse>>> getTeamCalendar(
             @Parameter(description = "팀 ID", example = "1")
             @PathVariable Long id) {
         
         // 캘린더는 스케줄과 동일한 데이터를 반환
         List<TeamScheduleResponse> schedules = teamService.getTeamSchedules(id);
-        return ResponseEntity.ok(ApiResponse.success(schedules));
+        return ResponseEntity.ok(ApiEnvelope.success(schedules));
     }
 
     // Deprecated: 기존 오타 경로 지원 (302 리다이렉트)

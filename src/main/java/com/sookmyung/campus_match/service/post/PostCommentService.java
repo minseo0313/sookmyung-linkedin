@@ -30,6 +30,17 @@ public class PostCommentService {
     private final UserRepository userRepository;
 
     /**
+     * 게시글의 댓글 목록 조회 (페이징 지원)
+     */
+    public com.sookmyung.campus_match.dto.common.PageResponse<PostCommentResponse> getComments(Long postId, Integer page, Integer size, String sort) {
+        // TODO: PageUtils를 사용한 페이징 처리
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
+        Page<PostComment> comments = postCommentRepository.findByPost_IdOrderByCreatedAtAsc(postId, pageable);
+        
+        return com.sookmyung.campus_match.dto.common.PageResponse.from(comments.map(PostCommentResponse::from));
+    }
+
+    /**
      * 게시글의 댓글 목록 조회 (학생 A 권한 제한 적용)
      * - 학생 A: 최대 2개까지만 읽기 가능
      * - 학생 B: 모든 댓글 읽기 가능

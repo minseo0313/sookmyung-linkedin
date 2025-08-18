@@ -1,12 +1,9 @@
 package com.sookmyung.campus_match.dto.auth;
 
-import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 /**
- * 사용자 배지(승인 여부) 응답 DTO.
- * - 승인 여부와 상태를 간단하게 반환
+ * 뱃지 응답 DTO
  */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -14,31 +11,35 @@ import lombok.*;
 @Builder
 public class BadgeResponse {
 
-    @Schema(description = "사용자 ID", example = "1")
     private Long userId;
+    private String badgeType;
+    private String badgeName;
+    private String description;
+    private Boolean isActive;
 
-    @Schema(description = "승인 상태", example = "APPROVED")
-    private ApprovalStatus approvalStatus;
-
-    @Schema(description = "배지 보유 여부", example = "true")
-    private boolean hasBadge;
-
-    @Schema(description = "운영진 여부", example = "false")
-    private boolean isOperator;
-
-    public static BadgeResponse from(ApprovalStatus status) {
+    public static BadgeResponse from(Long userId, com.sookmyung.campus_match.domain.common.enums.ApprovalStatus approvalStatus, boolean isOperator) {
         return BadgeResponse.builder()
-                .approvalStatus(status)
-                .hasBadge(status == ApprovalStatus.APPROVED)
+                .userId(userId)
+                .badgeType(approvalStatus.name())
+                .badgeName(getBadgeName(approvalStatus))
+                .description(getBadgeDescription(approvalStatus))
+                .isActive(isOperator)
                 .build();
     }
 
-    public static BadgeResponse from(Long userId, ApprovalStatus status, boolean isOperator) {
-        return BadgeResponse.builder()
-                .userId(userId)
-                .approvalStatus(status)
-                .hasBadge(status == ApprovalStatus.APPROVED)
-                .isOperator(isOperator)
-                .build();
+    private static String getBadgeName(com.sookmyung.campus_match.domain.common.enums.ApprovalStatus approvalStatus) {
+        return switch (approvalStatus) {
+            case APPROVED -> "승인된 사용자";
+            case PENDING -> "승인 대기중";
+            case REJECTED -> "승인 거부됨";
+        };
+    }
+
+    private static String getBadgeDescription(com.sookmyung.campus_match.domain.common.enums.ApprovalStatus approvalStatus) {
+        return switch (approvalStatus) {
+            case APPROVED -> "모든 기능을 사용할 수 있습니다.";
+            case PENDING -> "승인 후 모든 기능을 사용할 수 있습니다.";
+            case REJECTED -> "승인이 거부되었습니다.";
+        };
     }
 }

@@ -62,6 +62,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.department = :department")
     Page<User> findByDepartment(@Param("department") String department, Pageable pageable);
     
+    @Query("SELECT u FROM User u WHERE u.department LIKE %:department%")
+    Page<User> findByDepartmentContaining(@Param("department") String department, Pageable pageable);
+    
     @Query("SELECT u FROM User u WHERE u.approvalStatus = :status AND u.id != :userId")
     Page<User> findByApprovalStatusAndIdNot(@Param("status") ApprovalStatus status, 
                                            @Param("userId") Long userId, 

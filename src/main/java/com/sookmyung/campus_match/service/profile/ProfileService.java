@@ -97,4 +97,24 @@ public class ProfileService {
     public void incrementViewCountByUserId(Long userId) {
         profileRepository.incrementViewCount(userId);
     }
+
+    /**
+     * 관심사 목록 조회
+     */
+    public List<com.sookmyung.campus_match.dto.profile.InterestResponse> getInterests() {
+        // TODO: 실제 관심사 데이터를 가져와서 반환
+        return List.of();
+    }
+
+    /**
+     * 내 게시글 목록 조회
+     */
+    public com.sookmyung.campus_match.dto.common.PageResponse<com.sookmyung.campus_match.dto.post.PostSummaryResponse> getMyPosts(Integer page, Integer size, String sort) {
+        // TODO: PageUtils를 사용한 페이징 처리
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
+        // TODO: 실제 사용자의 게시글을 가져와서 반환
+        return com.sookmyung.campus_match.dto.common.PageResponse.from(
+            org.springframework.data.domain.Page.empty(pageable)
+        );
+    }
 }

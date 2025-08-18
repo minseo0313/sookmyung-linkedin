@@ -1,205 +1,187 @@
 package com.sookmyung.campus_match.controller.post;
 
-import com.sookmyung.campus_match.domain.post.Post;
-import com.sookmyung.campus_match.domain.user.User;
-import com.sookmyung.campus_match.dto.common.ApiResponse;
-import com.sookmyung.campus_match.repository.user.UserRepository;
-import com.sookmyung.campus_match.dto.post.PostContentSuggestionRequest;
-import com.sookmyung.campus_match.dto.post.PostContentSuggestionResponse;
-import com.sookmyung.campus_match.dto.post.PostCreateRequest;
-import com.sookmyung.campus_match.dto.post.PostDetailResponse;
-import com.sookmyung.campus_match.dto.post.PostSummaryResponse;
-import com.sookmyung.campus_match.dto.post.PostUpdateRequest;
-import com.sookmyung.campus_match.dto.like.PostLikeCountResponse;
-import com.sookmyung.campus_match.dto.application.PostApplicationRequest;
-import com.sookmyung.campus_match.dto.application.PostApplicationResponse;
+import com.sookmyung.campus_match.dto.common.ApiEnvelope;
+import com.sookmyung.campus_match.dto.common.PageResponse;
+import com.sookmyung.campus_match.dto.post.*;
+import com.sookmyung.campus_match.dto.post.PostLikeCountResponse;
 import com.sookmyung.campus_match.service.post.PostService;
-import com.sookmyung.campus_match.util.security.RequiresApproval;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
-import java.util.List;
-
-@Tag(name = "게시글", description = "게시글 관련 API")
+/**
+ * 게시글 관련 컨트롤러
+ */
+@Tag(name = "Post", description = "게시글 관련 API")
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
+@Validated
 public class PostController {
 
     private final PostService postService;
-    private final UserRepository userRepository;
 
-    @Operation(summary = "AI 게시글 작성 도움", description = "입력값을 기반으로 게시글 내용을 추천합니다.")
-    @PostMapping("/suggest-content")
-    @RequiresApproval(message = "승인된 사용자만 AI 글 작성 도움 기능을 사용할 수 있습니다.")
-    public ResponseEntity<ApiResponse<PostContentSuggestionResponse>> suggestContent(
-            @Valid @RequestBody PostContentSuggestionRequest request) {
-        
-        String suggestedContent = postService.generatePostContentSuggestion(
-                request.getCategory(),
-                request.getRequiredRoles(),
-                request.getDuration(),
-                request.getRecruitCount() != null ? request.getRecruitCount() : 1
-        );
-        
-        PostContentSuggestionResponse response = PostContentSuggestionResponse.of(
-                suggestedContent, 
-                request.getCategory() != null ? request.getCategory() : "기본"
-        );
-        
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @Operation(summary = "게시글 생성", description = "새로운 게시글을 생성합니다.")
+    @Operation(summary = "게시글 생성", description = "새로운 게시글을 생성합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "게시글 생성 성공",
+                    content = @Content(examples = @ExampleObject(value = """
+                            {
+                              "success": true,
+                              "code": "CREATED",
+                              "message": "created",
+                              "data": {
+                                "id": 1,
+                                "category": "PROJECT",
+                                "title": "프로젝트 팀원 모집",
+                                "content": "웹 개발 프로젝트 팀원을 모집합니다...",
+                                "requiredRoles": "프론트엔드 2명, 백엔드 1명",
+                                "recruitmentCount": 3,
+                                "duration": "3개월",
+                                "linkUrl": "https://github.com/project",
+                                "imageUrl": "https://example.com/image.jpg",
+                                "isClosed": false,
+                                "viewCount": 0,
+                                "likeCount": 0,
+                                "commentCount": 0,
+                                "authorId": 1,
+                                "authorName": "홍길동",
+                                "authorDepartment": "컴퓨터학부",
+                                "authorStudentId": "20240001",
+                                "createdAt": "2025-01-27T10:30:00",
+                                "updatedAt": "2025-01-27T10:30:00"
+                              },
+                              "timestamp": "2025-01-27T10:30:00Z"
+                            }
+                            """))),
+            @ApiResponse(responseCode = "400", description = "검증 실패"),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
     @PostMapping
-    @RequiresApproval(message = "승인된 사용자만 게시글을 작성할 수 있습니다.")
-    public ResponseEntity<ApiResponse<PostDetailResponse>> createPost(
-            @Valid @RequestBody PostCreateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiEnvelope<PostDetailResponse>> createPost(
+            @Valid @RequestBody PostCreateRequest request) {
         
-        // UserDetails에서 userId 추출 (학번으로 사용자 조회)
-        User user = userRepository.findByStudentId(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        
-        Post post = postService.createPost(request, user.getId());
-        PostDetailResponse response = PostDetailResponse.from(post);
-        
-        return ResponseEntity.ok(ApiResponse.success(response));
+        // TODO: 현재 사용자 정보를 가져와서 전달
+        PostDetailResponse post = postService.createPost(request, 1L);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header("Location", "/api/posts/" + post.getId())
+                .body(ApiEnvelope.created(post));
     }
 
-    @Operation(summary = "게시글 상세 조회", description = "게시글의 상세 정보를 조회합니다.")
-    @GetMapping("/{postId}")
-    public ResponseEntity<ApiResponse<PostDetailResponse>> getPost(@PathVariable Long postId) {
-        Post post = postService.getPost(postId)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
-        
-        // 조회수 증가
-        postService.incrementViews(postId);
-        
-        PostDetailResponse response = PostDetailResponse.from(post);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @Operation(summary = "게시글 수정", description = "게시글을 수정합니다.")
-    @PutMapping("/{postId}")
-    @RequiresApproval(message = "승인된 사용자만 게시글을 수정할 수 있습니다.")
-    public ResponseEntity<ApiResponse<PostDetailResponse>> updatePost(
-            @PathVariable Long postId,
+    @Operation(summary = "게시글 수정", description = "게시글을 수정합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "검증 실패"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiEnvelope<PostDetailResponse>> updatePost(
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long id,
             @Valid @RequestBody PostUpdateRequest request) {
         
-        Post post = postService.updatePost(postId, request);
-        PostDetailResponse response = PostDetailResponse.from(post);
-        
-        return ResponseEntity.ok(ApiResponse.success(response));
+        // TODO: 현재 사용자 정보를 가져와서 전달
+        PostDetailResponse post = postService.updatePost(id, request, 1L);
+        return ResponseEntity.ok(ApiEnvelope.success(post));
     }
 
-    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이징하여 조회합니다.")
-    @GetMapping
-    public ResponseEntity<ApiResponse<Page<PostSummaryResponse>>> getPosts(
-            @Parameter(description = "페이징 정보", example = "page=0&size=10&sort=createdAt,desc")
-            Pageable pageable) {
-        
-        Page<Post> posts = postService.getPosts(pageable);
-        Page<PostSummaryResponse> response = posts.map(PostSummaryResponse::from);
-        
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
-    @DeleteMapping("/{postId}")
-    @RequiresApproval(message = "승인된 사용자만 게시글을 삭제할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> deletePost(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        postService.deletePost(postId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("게시글이 삭제되었습니다."));
-    }
-
-    @Operation(summary = "게시글 좋아요 추가", description = "게시글에 좋아요를 추가합니다.")
-    @PostMapping("/{postId}/like")
-    @RequiresApproval(message = "승인된 사용자만 좋아요를 할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> likePost(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        postService.likePost(postId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("좋아요가 추가되었습니다."));
-    }
-
-    @Operation(summary = "게시글 좋아요 수 조회", description = "게시글의 좋아요 개수를 조회합니다.")
-    @GetMapping("/{postId}/likes/count")
-    public ResponseEntity<ApiResponse<PostLikeCountResponse>> getLikeCount(
+    @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "게시글 삭제 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiEnvelope<Void>> deletePost(
             @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long postId) {
-        PostLikeCountResponse likeCount = postService.getLikeCount(postId);
-        return ResponseEntity.ok(ApiResponse.success(likeCount));
+            @PathVariable Long id) {
+        
+        // TODO: 현재 사용자 정보를 가져와서 전달
+        postService.deletePost(id, 1L);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiEnvelope.okMessage());
     }
 
-    @Operation(summary = "게시글 지원", description = "게시글에 팀 지원 요청을 합니다.")
-    @PostMapping("/{postId}/apply")
-    @RequiresApproval(message = "승인된 사용자만 게시글에 지원할 수 있습니다.")
-    public ResponseEntity<ApiResponse<PostApplicationResponse>> applyToPost(
-            @PathVariable Long postId,
-            @Valid @RequestBody PostApplicationRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 페이징하여 조회합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글 목록 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 정렬 파라미터")
+    })
+    @GetMapping
+    public ResponseEntity<ApiEnvelope<PageResponse<PostSummaryResponse>>> getPosts(
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") Integer page,
+            @Parameter(description = "페이지 크기", example = "20")
+            @RequestParam(defaultValue = "20") Integer size,
+            @Parameter(description = "정렬 (필드,방향)", example = "createdAt,desc")
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
         
-        PostApplicationResponse application = postService.applyToPost(postId, request, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success(application));
+        PageResponse<PostSummaryResponse> posts = postService.getPosts(page, size, sort);
+        return ResponseEntity.ok(ApiEnvelope.success(posts));
     }
 
-    @Operation(summary = "게시글 지원자 목록", description = "게시글의 지원자 목록을 조회합니다.")
-    @GetMapping("/{postId}/applications")
-    @RequiresApproval(message = "승인된 사용자만 지원자 목록을 볼 수 있습니다.")
-    public ResponseEntity<ApiResponse<List<PostApplicationResponse>>> getApplications(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글 상세 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiEnvelope<PostDetailResponse>> getPost(
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long id) {
         
-        List<PostApplicationResponse> applications = postService.getApplications(postId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success(applications));
+        PostDetailResponse post = postService.getPost(id);
+        return ResponseEntity.ok(ApiEnvelope.success(post));
     }
 
-    @Operation(summary = "지원 수락", description = "지원자의 신청을 수락합니다.")
-    @PostMapping("/{postId}/applications/{applicantId}/accept")
-    @RequiresApproval(message = "승인된 사용자만 지원을 수락할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> acceptApplication(
-            @PathVariable Long postId,
-            @PathVariable Long applicantId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    @Operation(summary = "게시글 좋아요", description = "게시글에 좋아요를 추가합니다 (멱등성 보장)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "좋아요 성공"),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    @PostMapping("/{id}/like")
+    public ResponseEntity<ApiEnvelope<Void>> likePost(
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long id) {
         
-        postService.acceptApplication(postId, applicantId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("지원이 수락되었습니다."));
+        // TODO: 현재 사용자 정보를 가져와서 전달
+        postService.likePost(id, 1L);
+        return ResponseEntity.ok(ApiEnvelope.okMessage());
     }
 
-    @Operation(summary = "지원 거절", description = "지원자의 신청을 거절합니다.")
-    @PostMapping("/{postId}/applications/{applicantId}/reject")
-    @RequiresApproval(message = "승인된 사용자만 지원을 거절할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> rejectApplication(
-            @PathVariable Long postId,
-            @PathVariable Long applicantId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    @Operation(summary = "게시글 좋아요 수 조회", description = "게시글의 좋아요 수를 조회합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "좋아요 수 조회 성공",
+                    content = @Content(examples = @ExampleObject(value = """
+                            {
+                              "success": true,
+                              "code": "OK",
+                              "message": "success",
+                              "data": {
+                                "postId": 1,
+                                "likeCount": 25
+                              },
+                              "timestamp": "2025-01-27T10:30:00Z"
+                            }
+                            """))),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    @GetMapping("/{id}/likes/count")
+    public ResponseEntity<ApiEnvelope<PostLikeCountResponse>> getPostLikeCount(
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long id) {
         
-        postService.rejectApplication(postId, applicantId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("지원이 거절되었습니다."));
-    }
-
-    @Operation(summary = "모집 마감", description = "게시글의 모집을 마감합니다.")
-    @PatchMapping("/{postId}/close")
-    @RequiresApproval(message = "승인된 사용자만 모집을 마감할 수 있습니다.")
-    public ResponseEntity<ApiResponse<String>> closePost(
-            @PathVariable Long postId,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        
-        postService.closePost(postId, userDetails.getUsername());
-        return ResponseEntity.ok(ApiResponse.success("모집이 마감되었습니다."));
+        PostLikeCountResponse likeCount = postService.getPostLikeCount(id);
+        return ResponseEntity.ok(ApiEnvelope.success(likeCount));
     }
 }

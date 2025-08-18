@@ -32,35 +32,20 @@ public class SearchService {
      * - 카테고리별 필터링
      * - 페이징 지원
      */
-    public Page<PostSearchResponse> searchPosts(String keyword, String category, Pageable pageable) {
+    public com.sookmyung.campus_match.dto.common.PageResponse<PostSearchResponse> searchPosts(String keyword, Integer page, Integer size, String sort) {
+        // TODO: PageUtils를 사용한 페이징 처리
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
         Page<Post> posts;
         
         if (keyword != null && !keyword.trim().isEmpty()) {
             // 키워드가 있는 경우 제목, 내용, 작성자명으로 검색
-            PostCategory categoryEnum = null;
-            if (category != null && !category.trim().isEmpty()) {
-                try {
-                    categoryEnum = PostCategory.valueOf(category.trim().toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    // 잘못된 카테고리명인 경우 무시
-                }
-            }
-            posts = postRepository.searchByKeywordAndCategory(keyword.trim(), categoryEnum, pageable);
-        } else if (category != null && !category.trim().isEmpty()) {
-            // 카테고리만 있는 경우 카테고리로만 검색
-            try {
-                PostCategory categoryEnum = PostCategory.valueOf(category.trim().toUpperCase());
-                posts = postRepository.findByCategory(categoryEnum, pageable);
-            } catch (IllegalArgumentException e) {
-                // 잘못된 카테고리명인 경우 전체 조회
-                posts = postRepository.findAll(pageable);
-            }
+            posts = postRepository.searchByKeyword(keyword.trim(), pageable);
         } else {
-            // 키워드와 카테고리가 모두 없는 경우 전체 조회
+            // 키워드가 없는 경우 전체 조회
             posts = postRepository.findAll(pageable);
         }
         
-        return posts.map(PostSearchResponse::from);
+        return com.sookmyung.campus_match.dto.common.PageResponse.from(posts.map(PostSearchResponse::from));
     }
 
     /**
@@ -69,21 +54,20 @@ public class SearchService {
      * - 승인 상태별 필터링
      * - 페이징 지원
      */
-    public Page<UserSearchResponse> searchUsers(String keyword, String department, String interest, Pageable pageable) {
+    public com.sookmyung.campus_match.dto.common.PageResponse<UserSearchResponse> searchUsers(String keyword, Integer page, Integer size, String sort) {
+        // TODO: PageUtils를 사용한 페이징 처리
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
         Page<User> users;
         
         if (keyword != null && !keyword.trim().isEmpty()) {
             // 키워드가 있는 경우 이름, 학과로 검색
-            users = userRepository.searchByKeywordAndDepartment(keyword.trim(), department, pageable);
-        } else if (department != null && !department.trim().isEmpty()) {
-            // 학과만 있는 경우 학과로만 검색
-            users = userRepository.findByDepartment(department.trim(), pageable);
+            users = userRepository.findByDepartmentContaining(keyword.trim(), pageable);
         } else {
-            // 키워드와 학과가 모두 없는 경우 전체 조회
+            // 키워드가 없는 경우 전체 조회
             users = userRepository.findAll(pageable);
         }
         
-        return users.map(UserSearchResponse::from);
+        return com.sookmyung.campus_match.dto.common.PageResponse.from(users.map(UserSearchResponse::from));
     }
 
     /**

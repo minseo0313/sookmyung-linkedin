@@ -81,6 +81,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> searchByKeywordAndCategory(@Param("keyword") String keyword, 
                                          @Param("category") PostCategory category, 
                                          Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE " +
+           "p.postTitle LIKE %:keyword% OR p.postContent LIKE %:keyword% OR p.author.name LIKE %:keyword%")
+    Page<Post> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
     
 
     

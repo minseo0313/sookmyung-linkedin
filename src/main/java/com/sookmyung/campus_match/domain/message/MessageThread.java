@@ -66,25 +66,29 @@ public class MessageThread extends BaseEntity {
     private LocalDateTime lastMessageTime;
 
     // 도메인 메서드들
-    public void touchUpdatedAt() {
+    public void touch() {
         this.setUpdatedAt(LocalDateTime.now());
+    }
+
+    public void touchUpdatedAt() {
+        this.touch();
     }
 
     public void updateLastMessageAt(Instant lastMessageAt) {
         this.lastMessageAt = LocalDateTime.ofInstant(lastMessageAt, ZoneId.systemDefault());
-        this.setUpdatedAt(LocalDateTime.now());
+        this.touch();
     }
 
     public void updateLastMessageAt(LocalDateTime lastMessageAt) {
         this.lastMessageAt = lastMessageAt;
         this.lastMessageTime = lastMessageAt;
-        this.setUpdatedAt(LocalDateTime.now());
+        this.touch();
     }
 
     public void updateLastMessageTime(LocalDateTime lastMessageTime) {
         this.lastMessageTime = lastMessageTime;
         this.lastMessageAt = lastMessageTime;
-        this.setUpdatedAt(LocalDateTime.now());
+        this.touch();
     }
 
     public boolean isParticipant(Long userId) {
