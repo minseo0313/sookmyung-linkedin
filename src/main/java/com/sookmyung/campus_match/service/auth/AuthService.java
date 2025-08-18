@@ -11,6 +11,7 @@ import com.sookmyung.campus_match.dto.auth.VerifyPasswordRequest;
 import com.sookmyung.campus_match.exception.ApiException;
 import com.sookmyung.campus_match.exception.ErrorCode;
 import com.sookmyung.campus_match.repository.user.UserRepository;
+import com.sookmyung.campus_match.config.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +26,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public UserResponse register(UserRegisterRequest request) {
@@ -58,6 +60,8 @@ public class AuthService {
     }
 
     public TokenResponse login(UserLoginRequest request) {
+        log.info("로그인 시도 - studentId: {}", request.getStudentId());
+        
         User user = userRepository.findByStudentId(request.getStudentId())
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
@@ -68,8 +72,10 @@ public class AuthService {
         // 마지막 로그인 시간 업데이트
         user.setLastLoginAt(java.time.LocalDateTime.now());
 
-        // TODO: JWT 토큰 생성 로직 구현 필요
-        String token = "dummy-token-" + user.getId();
+        // JWT 토큰 생성
+        log.info("JWT 토큰 생성 시작 - userId: {}", user.getId());
+        String token = jwtTokenProvider.generateToken(user.getId().toString());
+        log.info("JWT 토큰 생성 완료 - token: {}", token);
         
         return TokenResponse.builder()
                 .accessToken(token)

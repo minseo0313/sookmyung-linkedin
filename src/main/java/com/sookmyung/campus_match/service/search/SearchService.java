@@ -7,6 +7,7 @@ import com.sookmyung.campus_match.dto.search.PostSearchResponse;
 import com.sookmyung.campus_match.dto.search.UserSearchResponse;
 import com.sookmyung.campus_match.repository.post.PostRepository;
 import com.sookmyung.campus_match.repository.user.UserRepository;
+import com.sookmyung.campus_match.util.page.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ public class SearchService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final PageUtils pageUtils;
 
     /**
      * 게시글 검색
@@ -33,19 +35,32 @@ public class SearchService {
      * - 페이징 지원
      */
     public com.sookmyung.campus_match.dto.common.PageResponse<PostSearchResponse> searchPosts(String keyword, Integer page, Integer size, String sort) {
-        // TODO: PageUtils를 사용한 페이징 처리
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
-        Page<Post> posts;
+        log.info("게시글 검색 요청 - keyword: {}, page: {}, size: {}", keyword, page, size);
         
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            // 키워드가 있는 경우 제목, 내용, 작성자명으로 검색
-            posts = postRepository.searchByKeyword(keyword.trim(), pageable);
-        } else {
-            // 키워드가 없는 경우 전체 조회
-            posts = postRepository.findAll(pageable);
+        try {
+            // 검색어 검증
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                pageUtils.validateKeyword(keyword);
+            }
+            
+            // TODO: PageUtils를 사용한 페이징 처리
+            Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
+            Page<Post> posts;
+            
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                // 키워드가 있는 경우 제목, 내용, 작성자명으로 검색
+                posts = postRepository.searchByKeyword(keyword.trim(), pageable);
+            } else {
+                // 키워드가 없는 경우 전체 조회
+                posts = postRepository.findAll(pageable);
+            }
+            
+            log.info("게시글 검색 완료 - 결과 수: {}", posts.getTotalElements());
+            return com.sookmyung.campus_match.dto.common.PageResponse.from(posts.map(PostSearchResponse::from));
+        } catch (Exception e) {
+            log.error("게시글 검색 중 오류 발생", e);
+            throw e;
         }
-        
-        return com.sookmyung.campus_match.dto.common.PageResponse.from(posts.map(PostSearchResponse::from));
     }
 
     /**
@@ -55,19 +70,27 @@ public class SearchService {
      * - 페이징 지원
      */
     public com.sookmyung.campus_match.dto.common.PageResponse<UserSearchResponse> searchUsers(String keyword, Integer page, Integer size, String sort) {
-        // TODO: PageUtils를 사용한 페이징 처리
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
-        Page<User> users;
+        log.info("사용자 검색 요청 - keyword: {}, page: {}, size: {}", keyword, page, size);
         
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            // 키워드가 있는 경우 이름, 학과로 검색
-            users = userRepository.findByDepartmentContaining(keyword.trim(), pageable);
-        } else {
-            // 키워드가 없는 경우 전체 조회
-            users = userRepository.findAll(pageable);
+        try {
+            // 간단한 페이징 처리
+            Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 20);
+            Page<User> users;
+            
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                // 키워드가 있는 경우 이름, 학과로 검색
+                users = userRepository.searchByKeyword(keyword.trim(), pageable);
+            } else {
+                // 키워드가 없는 경우 전체 조회
+                users = userRepository.findAll(pageable);
+            }
+            
+            log.info("사용자 검색 완료 - 결과 수: {}", users.getTotalElements());
+            return com.sookmyung.campus_match.dto.common.PageResponse.from(users.map(UserSearchResponse::from));
+        } catch (Exception e) {
+            log.error("사용자 검색 중 오류 발생", e);
+            throw e;
         }
-        
-        return com.sookmyung.campus_match.dto.common.PageResponse.from(users.map(UserSearchResponse::from));
     }
 
     /**

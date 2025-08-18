@@ -151,8 +151,8 @@ public class PageUtils {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search keyword must be at least 2 characters long");
         }
         
-        // 공백이나 특수문자만으로 구성된 경우 검증
-        if (trimmedKeyword.matches("^[\\s\\W]+$")) {
+        // 공백이나 특수문자만으로 구성된 경우 검증 (한글 포함)
+        if (trimmedKeyword.matches("^[\\s\\p{Punct}]+$")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search keyword cannot contain only whitespace or special characters");
         }
     }
