@@ -5,6 +5,7 @@ import com.sookmyung.campus_match.dto.common.PageResponse;
 import com.sookmyung.campus_match.dto.post.PostApplicationRequest;
 import com.sookmyung.campus_match.dto.application.PostApplicationResponse;
 import com.sookmyung.campus_match.service.post.PostApplicationService;
+import com.sookmyung.campus_match.util.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -60,9 +61,9 @@ public class PostApplicationController {
     public ResponseEntity<ApiEnvelope<PostApplicationResponse>> applyToPost(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody PostApplicationRequest request) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         PostApplicationResponse application = postApplicationService.applyToPost(id, request, currentUserId);
         URI location = URI.create("/api/posts/" + id + "/applications/" + application.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(application));
@@ -78,9 +79,9 @@ public class PostApplicationController {
     @PatchMapping("/{id}/close")
     public ResponseEntity<ApiEnvelope<Void>> closePost(
             @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId) {
+            @PathVariable Long id) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         postApplicationService.closePost(id, currentUserId);
         return ResponseEntity.ok(ApiEnvelope.okMessage());
     }
@@ -98,7 +99,6 @@ public class PostApplicationController {
     public ResponseEntity<ApiEnvelope<PageResponse<PostApplicationResponse>>> getApplications(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") Integer page,
             @Parameter(description = "페이지 크기", example = "20")
@@ -106,6 +106,7 @@ public class PostApplicationController {
             @Parameter(description = "정렬 (필드,방향)", example = "createdAt,desc")
             @RequestParam(defaultValue = "createdAt,desc") String sort) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         PageResponse<PostApplicationResponse> applications = postApplicationService.getApplications(id, currentUserId, page, size, sort);
         return ResponseEntity.ok(ApiEnvelope.success(applications));
     }

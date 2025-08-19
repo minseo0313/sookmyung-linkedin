@@ -217,6 +217,8 @@ public class PostService {
         Post post = Post.builder()
                 .author(author)
                 .category(request.getCategory())
+                .postTitle(request.getTitle())
+                .postContent(request.getContent())
                 .title(request.getTitle())
                 .content(request.getContent())
                 .requiredRoles(request.getRequiredRoles())

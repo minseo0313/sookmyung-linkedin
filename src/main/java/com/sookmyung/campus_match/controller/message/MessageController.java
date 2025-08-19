@@ -9,6 +9,7 @@ import com.sookmyung.campus_match.dto.message.MessageReplyRequest;
 import com.sookmyung.campus_match.dto.message.MessageReportRequest;
 import com.sookmyung.campus_match.dto.message.MessageReportResponse;
 import com.sookmyung.campus_match.service.message.MessageService;
+import com.sookmyung.campus_match.util.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -61,9 +62,9 @@ public class MessageController {
     })
     @PostMapping
     public ResponseEntity<ApiEnvelope<MessageResponse>> sendMessage(
-            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody MessageSendRequest request) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         MessageResponse message = messageService.sendMessage(request, currentUserId.toString());
         URI location = URI.create("/api/messages/" + message.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(message));
@@ -76,10 +77,10 @@ public class MessageController {
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    @GetMapping
-    public ResponseEntity<ApiEnvelope<List<MessageThreadResponse>>> getMessages(
-            @RequestHeader("X-USER-ID") Long currentUserId) {
+    @GetMapping("/threads")
+    public ResponseEntity<ApiEnvelope<List<MessageThreadResponse>>> getMessageThreads() {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         List<MessageThreadResponse> messages = messageService.getMessageThreads(currentUserId.toString());
         return ResponseEntity.ok(ApiEnvelope.success(messages));
     }
@@ -87,6 +88,7 @@ public class MessageController {
     @Operation(summary = "메시지 상세 조회", description = "특정 메시지의 상세 정보를 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "메시지 상세 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 메시지 ID"),
             @ApiResponse(responseCode = "401", description = "인증 실패"),
             @ApiResponse(responseCode = "404", description = "메시지를 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
@@ -94,9 +96,9 @@ public class MessageController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiEnvelope<List<MessageResponse>>> getMessage(
             @Parameter(description = "메시지 스레드 ID", example = "1")
-            @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId) {
+            @PathVariable Long id) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         List<MessageResponse> messages = messageService.getMessagesInThread(id, currentUserId.toString());
         return ResponseEntity.ok(ApiEnvelope.success(messages));
     }
@@ -114,9 +116,9 @@ public class MessageController {
     public ResponseEntity<ApiEnvelope<MessageResponse>> replyToMessage(
             @Parameter(description = "메시지 ID", example = "1")
             @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody MessageReplyRequest request) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         MessageResponse message = messageService.replyToMessage(id, request, currentUserId.toString());
         URI location = URI.create("/api/messages/" + message.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(message));
@@ -134,9 +136,9 @@ public class MessageController {
     public ResponseEntity<ApiEnvelope<MessageReportResponse>> reportMessage(
             @Parameter(description = "메시지 ID", example = "1")
             @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody MessageReportRequest request) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         MessageReportResponse report = messageService.reportMessage(id, request, currentUserId.toString());
         URI location = URI.create("/api/messages/" + id + "/report/" + report.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(report));

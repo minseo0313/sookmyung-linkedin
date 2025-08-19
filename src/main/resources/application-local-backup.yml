@@ -22,26 +22,33 @@ spring:
       max-lifetime: 1800000          # 커넥션 최대 수명 (30분)
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
       # ddl-auto 옵션 설명:
+      # - validate: 엔티티와 DB 스키마 일치 여부만 검증 (Flyway와 함께 사용)
+      # - create-drop: 시작 시 테이블 생성, 종료 시 삭제 (완전 초기화용)
       # - update: 엔티티 변경사항을 자동으로 DB에 반영 (로컬 개발용)
-      # - validate: 엔티티와 DB 스키마 일치 여부만 검증
       # - none: 스키마 변경 없음 (운영 환경용)
       # - create: 애플리케이션 시작 시 테이블 재생성 (주의: 데이터 손실)
-      # - create-drop: 시작 시 생성, 종료 시 삭제 (테스트용)
     open-in-view: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
         use_sql_comments: true
         jdbc.time_zone: Asia/Seoul
         default_batch_fetch_size: 100
         jdbc.batch_size: 50
   flyway:
-    enabled: false
-    # 로컬 개발 환경에서는 Flyway 대신 Hibernate가 스키마를 관리
-    # ddl-auto: update로 엔티티 기반 스키마 자동 생성
+    enabled: true
+    # Flyway를 활성화하여 스키마 마이그레이션 관리
+    validate-on-migrate: false
+    # 개발 환경에서 마이그레이션 검증을 완화하여 유연성 확보
+    baseline-on-migrate: true
+    # 기존 DB에 대한 베이스라인 설정 허용
+    clean-disabled: false
+    # Flyway clean 명령 허용 (개발 환경에서만)
+    clean-on-validation-error: true
+    # 검증 오류 시 자동으로 clean 실행
 
 logging:
   level:
@@ -50,6 +57,7 @@ logging:
     org.springframework.web: debug
     org.springframework.security: debug
     com.sookmyung.campus_match: debug
+    org.flywaydb: debug
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

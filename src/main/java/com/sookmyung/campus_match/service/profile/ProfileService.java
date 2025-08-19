@@ -29,7 +29,8 @@ public class ProfileService {
 
     @Transactional
     public ProfileResponse createProfile(ProfileCreateRequest request, String username) {
-        User user = userRepository.findByStudentId(username)
+        Long userId = Long.valueOf(username);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         // 이미 프로필이 있는지 확인
@@ -51,7 +52,8 @@ public class ProfileService {
 
     @Transactional
     public ProfileResponse updateProfile(Long profileId, ProfileUpdateRequest request, String username) {
-        User user = userRepository.findByStudentId(username)
+        Long userId = Long.valueOf(username);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         Profile profile = profileRepository.findById(profileId)
@@ -72,6 +74,14 @@ public class ProfileService {
 
     public ProfileResponse getProfile(Long profileId) {
         Profile profile = profileRepository.findById(profileId)
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "프로필을 찾을 수 없습니다."));
+
+        // TODO: 실제 관심사와 경력 데이터를 가져와서 전달해야 함
+        return ProfileResponse.from(profile, List.of(), List.of());
+    }
+
+    public ProfileResponse getProfileByUserId(Long userId) {
+        Profile profile = profileRepository.findByUser_Id(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "프로필을 찾을 수 없습니다."));
 
         // TODO: 실제 관심사와 경력 데이터를 가져와서 전달해야 함

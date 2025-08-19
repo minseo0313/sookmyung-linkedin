@@ -7,10 +7,18 @@ plugins {
 group = 'com.sookmyung'
 version = '0.0.1-SNAPSHOT'
 
+// 메인 클래스 경로를 변수로 선언
+def appMainClass = 'com.sookmyung.campus_match.CampusMatchApplication'
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
 	}
+}
+
+// Spring Boot 메인 클래스 설정
+springBoot {
+	mainClass.set(appMainClass)
 }
 
 configurations {
@@ -76,10 +84,13 @@ tasks.named('test') {
 
 // bootRun 태스크 설정 추가
 bootRun {
-    // 기본 프로필을 local로 설정
-    systemProperty "spring.profiles.active", "local"
+    mainClass.set(appMainClass)
     
-    // JVM 옵션 설정
+    // CLI/IDE 값 우선, 없으면 dev 기본
+    systemProperty "spring.profiles.active",
+        System.getProperty("spring.profiles.active",
+            System.getProperty("spring-boot.run.profiles", "dev"))
+
     jvmArgs = [
         "-Dfile.encoding=UTF-8",
         "-Duser.timezone=Asia/Seoul"
@@ -87,9 +98,12 @@ bootRun {
 }
 
 // local 프로필용 bootRun 태스크 추가
-task bootRunLocal(type: org.springframework.boot.gradle.tasks.run.BootRun) {
+tasks.register('bootRunLocal', org.springframework.boot.gradle.tasks.run.BootRun) {
     group = 'application'
     description = 'Run the Spring Boot application with local profile'
+
+    mainClass.set(appMainClass)
+    classpath = sourceSets.main.runtimeClasspath
     
     systemProperty "spring.profiles.active", "local"
     jvmArgs = [
@@ -99,9 +113,12 @@ task bootRunLocal(type: org.springframework.boot.gradle.tasks.run.BootRun) {
 }
 
 // dev 프로필용 bootRun 태스크 추가
-task bootRunDev(type: org.springframework.boot.gradle.tasks.run.BootRun) {
+tasks.register('bootRunDev', org.springframework.boot.gradle.tasks.run.BootRun) {
     group = 'application'
     description = 'Run the Spring Boot application with dev profile'
+
+    mainClass.set(appMainClass)
+    classpath = sourceSets.main.runtimeClasspath
     
     systemProperty "spring.profiles.active", "dev"
     jvmArgs = [

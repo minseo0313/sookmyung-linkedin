@@ -5,6 +5,7 @@ import com.sookmyung.campus_match.dto.team.TeamCalendarRequest;
 import com.sookmyung.campus_match.dto.team.TeamCalendarResponse;
 import com.sookmyung.campus_match.dto.team.TeamEventResponse;
 import com.sookmyung.campus_match.service.team.TeamCalendarService;
+import com.sookmyung.campus_match.util.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -76,10 +77,9 @@ public class TeamCalendarController {
     @GetMapping("/{id}/calendar")
     public ResponseEntity<ApiEnvelope<TeamCalendarResponse>> getTeamCalendar(
             @Parameter(description = "팀 ID", example = "1")
-            @PathVariable("id") Long teamId,
-            @Parameter(description = "현재 사용자 ID", example = "101")
-            @RequestHeader("X-USER-ID") Long currentUserId) {
+            @PathVariable("id") Long teamId) {
 
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         TeamCalendarResponse response = teamCalendarService.getTeamCalendar(teamId, currentUserId);
         return ResponseEntity.ok(ApiEnvelope.success(response));
     }
@@ -118,10 +118,9 @@ public class TeamCalendarController {
             @Parameter(description = "팀 ID", example = "1")
             @PathVariable("id") Long teamId,
             @Parameter(description = "캘린더 이벤트 생성 요청")
-            @Valid @RequestBody TeamCalendarRequest request,
-            @Parameter(description = "현재 사용자 ID", example = "101")
-            @RequestHeader("X-USER-ID") Long currentUserId) {
+            @Valid @RequestBody TeamCalendarRequest request) {
 
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         TeamEventResponse response = teamCalendarService.createTeamCalendarEvent(teamId, request, currentUserId);
         
         URI location = URI.create("/api/teams/" + teamId + "/calendar/events/" + response.getId());

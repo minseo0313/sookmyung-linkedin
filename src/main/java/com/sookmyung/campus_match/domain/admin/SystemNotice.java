@@ -59,10 +59,10 @@ public class SystemNotice extends BaseEntity {
     }
 
     public String getAdminName() {
-        return this.createdBy != null ? this.createdBy.getAdminName() : null;
+        return this.createdBy != null && this.createdBy.getUser() != null ? this.createdBy.getUser().getName() : null;
     }
 
     public String getAdminUsername() {
-        return this.createdBy != null ? this.createdBy.getAdminName() : null;
+        return this.createdBy != null && this.createdBy.getUser() != null ? this.createdBy.getUser().getName() : null;
     }
 }

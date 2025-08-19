@@ -49,7 +49,7 @@ public class TeamService {
     @Transactional
     public TeamResponse createTeam(String teamName, String description, Integer maxMembers, 
                                  Long postId, String username) {
-        User user = userRepository.findByStudentId(username)
+        User user = userRepository.findById(Long.valueOf(username))
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         Team team = Team.builder()

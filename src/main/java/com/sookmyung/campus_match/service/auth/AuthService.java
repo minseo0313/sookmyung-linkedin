@@ -1,7 +1,9 @@
 package com.sookmyung.campus_match.service.auth;
 
 import com.sookmyung.campus_match.domain.user.User;
+import com.sookmyung.campus_match.domain.user.Profile;
 import com.sookmyung.campus_match.domain.common.enums.ApprovalStatus;
+
 import com.sookmyung.campus_match.dto.auth.BadgeResponse;
 import com.sookmyung.campus_match.dto.auth.TokenResponse;
 import com.sookmyung.campus_match.dto.auth.UserLoginRequest;
@@ -11,6 +13,7 @@ import com.sookmyung.campus_match.dto.auth.VerifyPasswordRequest;
 import com.sookmyung.campus_match.exception.ApiException;
 import com.sookmyung.campus_match.exception.ErrorCode;
 import com.sookmyung.campus_match.repository.user.UserRepository;
+import com.sookmyung.campus_match.repository.user.ProfileRepository;
 import com.sookmyung.campus_match.config.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,23 +28,26 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public UserResponse register(UserRegisterRequest request) {
-        // 중복 체크
-        if (userRepository.existsByStudentId(request.getStudentId())) {
-            throw new ApiException(ErrorCode.USER_ALREADY_EXISTS, "이미 존재하는 학번입니다.");
-        }
+        // 이메일 중복 확인
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException(ErrorCode.USER_ALREADY_EXISTS, "이미 존재하는 이메일입니다.");
         }
 
-        // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        // 학번 중복 확인
+        if (userRepository.existsByStudentId(request.getStudentId())) {
+            throw new ApiException(ErrorCode.USER_ALREADY_EXISTS, "이미 존재하는 학번입니다.");
+        }
 
-        // 사용자 생성 (권한성 필드는 엔티티 기본값 사용)
+        // 비밀번호 해시화
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
+
+        // 사용자 생성
         User user = User.builder()
                 .studentId(request.getStudentId())
                 .department(request.getDepartment())
@@ -49,13 +55,26 @@ public class AuthService {
                 .birthDate(request.getBirthDate())
                 .phoneNumber(request.getPhoneNumber())
                 .email(request.getEmail())
-                .passwordHash(encodedPassword)
+                .passwordHash(hashedPassword)
+                .approvalStatus(ApprovalStatus.PENDING)
+                .operator(false)
                 .build();
-        
-        // 안전장치: reportCount 명시적 초기화
-        user.setReportCount(0);
 
         User savedUser = userRepository.save(user);
+        
+        // 기본 프로필 생성
+        Profile profile = Profile.builder()
+                .user(savedUser)
+                .department(savedUser.getDepartment())
+                .studentCode(savedUser.getStudentId())
+                .headline("새로운 사용자")
+                .bio("안녕하세요!")
+                .greetingEnabled(true)
+                .viewCount(0)
+                .build();
+        
+        profileRepository.save(profile);
+        
         return UserResponse.from(savedUser);
     }
 

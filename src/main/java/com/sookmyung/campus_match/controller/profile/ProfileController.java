@@ -8,6 +8,7 @@ import com.sookmyung.campus_match.dto.profile.ProfileResponse;
 import com.sookmyung.campus_match.dto.profile.ProfileUpdateRequest;
 import com.sookmyung.campus_match.dto.user.InterestResponse;
 import com.sookmyung.campus_match.service.profile.ProfileService;
+import com.sookmyung.campus_match.util.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -71,8 +72,8 @@ public class ProfileController {
     public ResponseEntity<ApiEnvelope<ProfileResponse>> createProfile(
             @Valid @RequestBody ProfileCreateRequest request) {
         
-        // TODO: 현재 사용자 정보를 가져와서 전달
-        ProfileResponse profile = profileService.createProfile(request, "current-user");
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        ProfileResponse profile = profileService.createProfile(request, currentUserId.toString());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .header("Location", "/api/profiles/" + profile.getUserId())
                 .body(ApiEnvelope.created(profile));
@@ -93,8 +94,8 @@ public class ProfileController {
             @PathVariable Long id,
             @Valid @RequestBody ProfileUpdateRequest request) {
         
-        // TODO: 현재 사용자 정보를 가져와서 전달
-        ProfileResponse profile = profileService.updateProfile(id, request, "current-user");
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        ProfileResponse profile = profileService.updateProfile(id, request, currentUserId.toString());
         return ResponseEntity.ok(ApiEnvelope.success(profile));
     }
 
@@ -118,9 +119,25 @@ public class ProfileController {
         return ResponseEntity.ok(ApiEnvelope.success(profile));
     }
 
-    @Operation(summary = "프로필 조회", description = "프로필을 조회합니다")
+    @Operation(summary = "내 프로필 조회", description = "현재 로그인한 사용자의 프로필을 조회합니다")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    @GetMapping("/profiles/me")
+    public ResponseEntity<ApiEnvelope<ProfileResponse>> getMyProfile() {
+        
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        ProfileResponse profile = profileService.getProfileByUserId(currentUserId);
+        return ResponseEntity.ok(ApiEnvelope.success(profile));
+    }
+
+    @Operation(summary = "프로필 조회", description = "특정 프로필을 조회합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 프로필 ID"),
             @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
@@ -130,6 +147,21 @@ public class ProfileController {
             @PathVariable Long id) {
         
         ProfileResponse profile = profileService.getProfile(id);
+        return ResponseEntity.ok(ApiEnvelope.success(profile));
+    }
+
+    @Operation(summary = "사용자 ID로 프로필 조회", description = "사용자 ID로 프로필을 조회합니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "프로필을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    @GetMapping("/profiles/user/{userId}")
+    public ResponseEntity<ApiEnvelope<ProfileResponse>> getProfileByUserId(
+            @Parameter(description = "사용자 ID", example = "1")
+            @PathVariable Long userId) {
+        
+        ProfileResponse profile = profileService.getProfileByUserId(userId);
         return ResponseEntity.ok(ApiEnvelope.success(profile));
     }
 

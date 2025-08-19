@@ -34,7 +34,7 @@ public class ApprovalAspect {
         }
 
         String username = authentication.getName();
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findById(Long.valueOf(username))
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         // 승인되지 않은 사용자(PENDING)는 접근 불가

@@ -25,7 +25,7 @@ public class Profile {
     @Column(name = "department", length = 255)
     private String department;
 
-    @Column(name = "student_code", length = 2)
+    @Column(name = "student_code", length = 20)
     private String studentCode;
 
     @Column(name = "bio", length = 100)

@@ -134,6 +134,16 @@ public class Post extends BaseEntity {
         return this.content != null ? this.content : this.postContent;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+        this.postTitle = title;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+        this.postContent = content;
+    }
+
     public Long getViews() {
         return this.viewCount != null ? this.viewCount.longValue() : 0L;
     }
@@ -147,7 +157,7 @@ public class Post extends BaseEntity {
     }
 
     public String getCategoryName() {
-        return this.category != null ? this.category.getDescription() : null;
+        return this.category != null ? this.category.name() : null;
     }
 
     public Integer getRecruitCount() {

@@ -5,6 +5,7 @@ import com.sookmyung.campus_match.dto.common.PageResponse;
 import com.sookmyung.campus_match.dto.comment.PostCommentCreateRequest;
 import com.sookmyung.campus_match.dto.comment.PostCommentResponse;
 import com.sookmyung.campus_match.service.post.PostCommentService;
+import com.sookmyung.campus_match.util.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -61,9 +62,9 @@ public class PostCommentController {
     public ResponseEntity<ApiEnvelope<PostCommentResponse>> createComment(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
-            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody PostCommentCreateRequest request) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         PostCommentResponse comment = postCommentService.createComment(request, postId, currentUserId.toString());
         URI location = URI.create("/api/posts/" + postId + "/comments/" + comment.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(comment));

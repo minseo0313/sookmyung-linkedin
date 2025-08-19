@@ -1,6 +1,7 @@
 package com.sookmyung.campus_match.domain.admin;
 
 import com.sookmyung.campus_match.domain.common.BaseEntity;
+import com.sookmyung.campus_match.domain.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,9 +14,11 @@ import lombok.*;
 @Builder
 public class Admin extends BaseEntity {
 
-    @Column(name = "admin_name", nullable = false, length = 255)
-    private String adminName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(name = "role", length = 50)
+    @Builder.Default
+    private String role = "ADMIN";
 }

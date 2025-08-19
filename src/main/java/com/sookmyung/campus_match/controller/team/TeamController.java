@@ -8,6 +8,7 @@ import com.sookmyung.campus_match.dto.schedule.ScheduleAssignmentRequest;
 import com.sookmyung.campus_match.dto.schedule.ScheduleAssignmentResponse;
 import com.sookmyung.campus_match.service.team.TeamService;
 import com.sookmyung.campus_match.util.security.RequiresApproval;
+import com.sookmyung.campus_match.util.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,10 +51,10 @@ public class TeamController {
             @Parameter(description = "최대 인원", example = "5")
             @RequestParam(required = false) Integer maxMembers,
             @Parameter(description = "게시글 ID", example = "1")
-            @RequestParam(required = false) Long postId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestParam(required = false) Long postId) {
         
-        TeamResponse team = teamService.createTeam(teamName, description, maxMembers, postId, userDetails.getUsername());
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        TeamResponse team = teamService.createTeam(teamName, description, maxMembers, postId, currentUserId.toString());
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiEnvelope.created(team));
     }
 

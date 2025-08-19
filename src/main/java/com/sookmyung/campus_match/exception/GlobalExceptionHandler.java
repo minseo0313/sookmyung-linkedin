@@ -6,11 +6,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +81,38 @@ public class GlobalExceptionHandler {
         
         log.warn("Invalid parameter: {}", ex.getMessage());
         return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * ResponseStatusException 처리 (권한 없음, 리소스 없음 등)
+     */
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleResponseStatusException(
+            org.springframework.web.server.ResponseStatusException ex, WebRequest request) {
+        
+        String code;
+        switch (ex.getStatusCode()) {
+            case FORBIDDEN:
+                code = "FORBIDDEN";
+                break;
+            case NOT_FOUND:
+                code = "RESOURCE_NOT_FOUND";
+                break;
+            case BAD_REQUEST:
+                code = "BAD_REQUEST";
+                break;
+            default:
+                code = "ERROR";
+        }
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code(code)
+                .message(ex.getReason())
+                .build();
+        
+        log.warn("ResponseStatusException: {} - {}", ex.getStatusCode(), ex.getReason());
+        return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
     /**
@@ -176,6 +215,91 @@ public class GlobalExceptionHandler {
         
         log.warn("API exception: {} - {}", ex.getErrorCode(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * 숫자 형식 변환 오류 처리
+     */
+    @ExceptionHandler(NumberFormatException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleNumberFormatException(
+            NumberFormatException ex, WebRequest request) {
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("INVALID_NUMBER_FORMAT")
+                .message("Invalid number format")
+                .build();
+        
+        log.warn("Number format error: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * 메서드 인자 타입 불일치 처리
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex, WebRequest request) {
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("INVALID_PARAMETER_TYPE")
+                .message("Invalid parameter type: " + ex.getName())
+                .build();
+        
+        log.warn("Parameter type mismatch: {} - {}", ex.getName(), ex.getValue());
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * 필수 파라미터 누락 처리
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException ex, WebRequest request) {
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("MISSING_PARAMETER")
+                .message("Missing required parameter: " + ex.getParameterName())
+                .build();
+        
+        log.warn("Missing parameter: {}", ex.getParameterName());
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * 지원하지 않는 HTTP 메서드 처리
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleHttpRequestMethodNotSupportedException(
+            HttpRequestMethodNotSupportedException ex, WebRequest request) {
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("METHOD_NOT_ALLOWED")
+                .message("Method not allowed: " + ex.getMethod())
+                .build();
+        
+        log.warn("Method not allowed: {}", ex.getMethod());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+    }
+
+    /**
+     * 핸들러를 찾을 수 없음 처리
+     */
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleNoHandlerFoundException(
+            NoHandlerFoundException ex, WebRequest request) {
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("ENDPOINT_NOT_FOUND")
+                .message("Endpoint not found: " + ex.getRequestURL())
+                .build();
+        
+        log.warn("Endpoint not found: {} {}", ex.getHttpMethod(), ex.getRequestURL());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     /**

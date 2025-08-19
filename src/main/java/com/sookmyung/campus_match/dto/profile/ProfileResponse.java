@@ -39,7 +39,7 @@ public class ProfileResponse {
                 .websiteUrl(profile.getWebsiteUrl())
                 .linkedinUrl(profile.getLinkedinUrl())
                 .viewCount(profile.getViewCount())
-                .greetingEnabled(profile.isGreetingEnabled())
+                .greetingEnabled(Boolean.valueOf(profile.isGreetingEnabled()))
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())
                 .build();

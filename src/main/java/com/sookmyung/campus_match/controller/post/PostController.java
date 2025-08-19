@@ -4,6 +4,7 @@ import com.sookmyung.campus_match.dto.common.ApiEnvelope;
 import com.sookmyung.campus_match.dto.common.PageResponse;
 import com.sookmyung.campus_match.dto.post.*;
 import com.sookmyung.campus_match.service.post.PostService;
+import com.sookmyung.campus_match.util.security.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -68,9 +69,9 @@ public class PostController {
     })
     @PostMapping
     public ResponseEntity<ApiEnvelope<PostDetailResponse>> createPost(
-            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody PostCreateRequest request) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         PostDetailResponse post = postService.createPost(request, currentUserId);
         URI location = URI.create("/api/posts/" + post.getId());
         return ResponseEntity.created(location).body(ApiEnvelope.created(post));
@@ -87,9 +88,9 @@ public class PostController {
     public ResponseEntity<ApiEnvelope<PostDetailResponse>> updatePost(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId,
             @Valid @RequestBody PostUpdateRequest request) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         PostDetailResponse post = postService.updatePost(id, request, currentUserId);
         return ResponseEntity.ok(ApiEnvelope.success(post));
     }
@@ -103,9 +104,9 @@ public class PostController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(
             @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId) {
+            @PathVariable Long id) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         postService.deletePost(id, currentUserId);
         return ResponseEntity.noContent().build();
     }
@@ -153,9 +154,9 @@ public class PostController {
     @PostMapping("/{id}/like")
     public ResponseEntity<ApiEnvelope<Void>> likePost(
             @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long id,
-            @RequestHeader("X-USER-ID") Long currentUserId) {
+            @PathVariable Long id) {
         
+        Long currentUserId = SecurityUtils.getCurrentUserId();
         postService.likePost(id, currentUserId);
         return ResponseEntity.ok(ApiEnvelope.okMessage());
     }

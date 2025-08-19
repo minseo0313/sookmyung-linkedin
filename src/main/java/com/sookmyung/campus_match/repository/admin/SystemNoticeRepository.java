@@ -37,7 +37,7 @@ public interface SystemNoticeRepository extends JpaRepository<SystemNotice, Long
     @Query("SELECT sn FROM SystemNotice sn ORDER BY sn.createdAt DESC")
     List<SystemNotice> findTop5ByOrderByCreatedAtDesc();
     
-    @Query("SELECT sn FROM SystemNotice sn WHERE sn.createdBy.adminName LIKE %:adminUsername%")
+    @Query("SELECT sn FROM SystemNotice sn WHERE sn.createdBy.user.name LIKE %:adminUsername%")
     Page<SystemNotice> findByAdminUsernameContainingIgnoreCase(@Param("adminUsername") String adminUsername, Pageable pageable);
     
     long count();

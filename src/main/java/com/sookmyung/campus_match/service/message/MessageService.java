@@ -43,7 +43,8 @@ public class MessageService {
      */
     @Transactional
     public MessageResponse sendMessage(MessageSendRequest request, String senderUsername) {
-        User sender = userRepository.findByStudentId(senderUsername)
+        Long senderId = Long.valueOf(senderUsername);
+        User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "발신자를 찾을 수 없습니다."));
 
         User recipient = userRepository.findById(request.getReceiverId())
@@ -91,7 +92,8 @@ public class MessageService {
      */
     @Transactional
     public MessageResponse replyToMessage(Long threadId, MessageReplyRequest request, String senderUsername) {
-        User sender = userRepository.findByStudentId(senderUsername)
+        Long senderId = Long.valueOf(senderUsername);
+        User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "발신자를 찾을 수 없습니다."));
 
         MessageThread thread = messageThreadRepository.findById(threadId)
@@ -121,7 +123,8 @@ public class MessageService {
      * 메시지 스레드 목록 조회
      */
     public List<MessageThreadResponse> getMessageThreads(String username) {
-        User user = userRepository.findByStudentId(username)
+        Long userId = Long.valueOf(username);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         List<MessageThread> threads = messageThreadRepository.findByUserId(user.getId());
@@ -140,7 +143,8 @@ public class MessageService {
      * 스레드의 메시지 목록 조회
      */
     public List<MessageResponse> getMessagesInThread(Long threadId, String username) {
-        User user = userRepository.findByStudentId(username)
+        Long userId = Long.valueOf(username);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         MessageThread thread = messageThreadRepository.findById(threadId)
@@ -164,7 +168,8 @@ public class MessageService {
      */
     @Transactional
     public MessageResponse editMessage(Long messageId, String newContent, String username) {
-        User user = userRepository.findByStudentId(username)
+        Long userId = Long.valueOf(username);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         Message message = messageRepository.findById(messageId)
@@ -186,7 +191,8 @@ public class MessageService {
      */
     @Transactional
     public void deleteMessage(Long messageId, String username) {
-        User user = userRepository.findByStudentId(username)
+        Long userId = Long.valueOf(username);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         Message message = messageRepository.findById(messageId)
@@ -206,7 +212,8 @@ public class MessageService {
      */
     @Transactional
     public MessageReportResponse reportMessage(Long messageId, MessageReportRequest request, String username) {
-        User reporter = userRepository.findByStudentId(username)
+        Long reporterId = Long.valueOf(username);
+        User reporter = userRepository.findById(reporterId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "신고자를 찾을 수 없습니다."));
 
         Message message = messageRepository.findById(messageId)
@@ -238,7 +245,8 @@ public class MessageService {
      * 사용자의 메시지 목록 조회 (페이징)
      */
     public Page<MessageResponse> getUserMessages(String username, Pageable pageable) {
-        User user = userRepository.findByStudentId(username)
+        Long userId = Long.valueOf(username);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         Page<Message> messages = messageRepository.findBySenderOrderByCreatedAtDesc(user, pageable);
@@ -250,7 +258,8 @@ public class MessageService {
      * 읽지 않은 메시지 수 조회
      */
     public long getUnreadMessageCount(String username) {
-        User user = userRepository.findByStudentId(username)
+        Long userId = Long.valueOf(username);
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         return messageRepository.countUnreadMessagesByUser(user.getId());

@@ -43,6 +43,10 @@ public class TeamCalendarService {
      * @return 팀 캘린더 응답
      */
     public TeamCalendarResponse getTeamCalendar(Long teamId, Long currentUserId) {
+        // 사용자 조회
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다"));
+
         // 팀 조회
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "팀을 찾을 수 없습니다"));
