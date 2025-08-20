@@ -114,16 +114,16 @@ gradlew.bat bootRun
 #### 1. Run/Debug Configurations 열기
 - `Run` → `Edit Configurations...` 클릭
 
-#### 2. Spring Boot 설정
+#### 2. Spring Boot 설정 (dev 환경용)
 - `Spring Boot` 템플릿 선택
-- `Name`: `CampusMatch Local` (또는 원하는 이름)
+- `Name`: `CampusMatch Dev` (또는 원하는 이름)
 - `Main class`: `com.sookmyung.campus_match.CampusMatchApplication`
-- `VM options`: `-Dspring.profiles.active=local`
-- `Active profiles`: `local`
+- `VM options`: `-Dspring.profiles.active=dev`
+- `Active profiles`: `dev`
 
 #### 3. 환경변수 설정 (선택사항)
 - `Environment variables` 섹션에서:
-  - `SPRING_PROFILES_ACTIVE=local`
+  - `SPRING_PROFILES_ACTIVE=dev`
 
 ## 🧪 API 테스트 및 검증
 
