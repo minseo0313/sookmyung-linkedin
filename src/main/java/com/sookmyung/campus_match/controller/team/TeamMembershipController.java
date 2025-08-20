@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.sookmyung.campus_match.config.security.CurrentUserResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +29,7 @@ import java.net.URI;
 public class TeamMembershipController {
 
     private final TeamMembershipService teamMembershipService;
+    private final CurrentUserResolver currentUserResolver;
 
     @Operation(summary = "팀 초대 수락", description = "현재 사용자가 팀의 초대를 수락하여 멤버가 됩니다")
     @ApiResponses(value = {
@@ -60,10 +62,9 @@ public class TeamMembershipController {
     @PostMapping("/{id}/accept")
     public ResponseEntity<ApiEnvelope<TeamMembershipResponse>> acceptInvite(
             @Parameter(description = "팀 ID", example = "1")
-            @PathVariable("id") Long teamId,
-            @Parameter(description = "현재 사용자 ID", example = "101")
-            @RequestHeader("X-USER-ID") Long currentUserId) {
+            @PathVariable("id") Long teamId) {
 
+        Long currentUserId = currentUserResolver.currentUserId();
         TeamMembershipResponse response = teamMembershipService.acceptInvite(teamId, currentUserId);
         
         URI location = URI.create("/api/teams/" + teamId + "/members/" + currentUserId);

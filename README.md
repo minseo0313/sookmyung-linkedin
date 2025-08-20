@@ -126,6 +126,25 @@ gradlew.bat bootRun
 - **개발 환경**: http://localhost:8081
 - **API 문서**: http://localhost:8080/swagger-ui.html
 
+## 📚 개발 가이드
+
+### 프론트엔드 개발자를 위한 API 가이드
+- **[프론트엔드 API 호출 가이드라인](docs/frontend-api-guidelines.md)**: JavaScript에서 API 호출 시 주의사항
+- **[검색 API URL 인코딩 가이드](docs/search-api-encoding-guide.md)**: 한글/특수문자 키워드 처리 방법 ⚠️
+
+### 중요: 검색 API 사용 시 주의사항
+한글이나 특수문자가 포함된 검색 키워드는 **반드시 URL 인코딩**이 필요합니다:
+
+```javascript
+// ❌ 잘못된 방법 (400 에러 발생)
+const url = `/api/search/posts?keyword=개발`;
+
+// ✅ 올바른 방법
+const url = `/api/search/posts?keyword=${encodeURIComponent('개발')}`;
+```
+
+자세한 내용은 [검색 API URL 인코딩 가이드](docs/search-api-encoding-guide.md)를 참조하세요.
+
 ## 🔍 연결 문제 해결 체크리스트
 
 ### 1. 포트 연결 확인

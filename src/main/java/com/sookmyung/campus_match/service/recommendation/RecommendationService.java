@@ -41,42 +41,47 @@ public class RecommendationService {
      */
     @Transactional
     public List<UserRecommendation> generateRecommendationsForUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
-        // 승인된 사용자만 추천 대상
-        List<User> approvedUsers = userRepository.findByApprovalStatus(ApprovalStatus.APPROVED);
-        approvedUsers.remove(user); // 본인 제외
+            // 승인된 사용자만 추천 대상
+            List<User> approvedUsers = userRepository.findByApprovalStatus(ApprovalStatus.APPROVED);
+            approvedUsers.remove(user); // 본인 제외
 
-        List<UserRecommendation> recommendations = new ArrayList<>();
+            List<UserRecommendation> recommendations = new ArrayList<>();
 
-        for (User candidate : approvedUsers) {
-            double similarityScore = calculateSimilarity(user, candidate);
-            
-            if (similarityScore > 0.1) { // 최소 유사도 임계값
-                UserRecommendation recommendation = UserRecommendation.builder()
-                        .user(user)
-                        .recommendedUser(candidate)
-                        .similarityScore(BigDecimal.valueOf(similarityScore))
-                        .build();
+            for (User candidate : approvedUsers) {
+                double similarityScore = calculateSimilarity(user, candidate);
                 
-                recommendations.add(recommendation);
+                if (similarityScore > 0.1) { // 최소 유사도 임계값
+                    UserRecommendation recommendation = UserRecommendation.builder()
+                            .user(user)
+                            .recommendedUser(candidate)
+                            .similarityScore(BigDecimal.valueOf(similarityScore))
+                            .build();
+                    
+                    recommendations.add(recommendation);
+                }
             }
+
+            // 유사도 점수 순으로 정렬
+            recommendations.sort((a, b) -> Double.compare(b.getSimilarityScore(), a.getSimilarityScore()));
+
+            // 상위 20개만 저장
+            List<UserRecommendation> topRecommendations = recommendations.stream()
+                    .limit(20)
+                    .collect(Collectors.toList());
+
+            // 기존 추천 기록 삭제 후 새로운 추천 저장
+            userRecommendationRepository.deleteByUserId(userId);
+            userRecommendationRepository.saveAll(topRecommendations);
+
+            return topRecommendations;
+        } catch (Exception e) {
+            log.warn("사용자 추천 생성 실패 - 사용자 ID: {}, 오류: {}", userId, e.getMessage());
+            return java.util.Collections.emptyList();
         }
-
-        // 유사도 점수 순으로 정렬
-        recommendations.sort((a, b) -> Double.compare(b.getSimilarityScore(), a.getSimilarityScore()));
-
-        // 상위 20개만 저장
-        List<UserRecommendation> topRecommendations = recommendations.stream()
-                .limit(20)
-                .collect(Collectors.toList());
-
-        // 기존 추천 기록 삭제 후 새로운 추천 저장
-        userRecommendationRepository.deleteByUserId(userId);
-        userRecommendationRepository.saveAll(topRecommendations);
-
-        return topRecommendations;
     }
 
     /**

@@ -4,20 +4,25 @@ import com.sookmyung.campus_match.dto.common.ApiEnvelope;
 import com.sookmyung.campus_match.dto.common.PageResponse;
 import com.sookmyung.campus_match.dto.search.PostSearchResponse;
 import com.sookmyung.campus_match.dto.search.UserSearchResponse;
+import com.sookmyung.campus_match.dto.search.SearchRequest;
 import com.sookmyung.campus_match.service.search.SearchService;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @Tag(name = "Search", description = "검색 API")
 @RestController
 @RequestMapping("/api/search")
 @RequiredArgsConstructor
+@Profile("!dev") // WHY: dev 환경에서는 DevSearchController가 대신 처리
 public class SearchController {
 
     private final SearchService searchService;
@@ -31,18 +36,25 @@ public class SearchController {
     })
     @GetMapping("/users")
     public ResponseEntity<ApiEnvelope<PageResponse<UserSearchResponse>>> searchUsers(
-            @Parameter(description = "검색 키워드", example = "홍길동")
             @RequestParam(required = false) String keyword,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") Integer page,
-            @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") Integer size) {
         
+        // WHY: dev 환경에서 검색 파라미터 검증과 안전한 처리
+        log.debug("사용자 검색 요청 - keyword: {}, page: {}, size: {}", keyword, page, size);
+        
         try {
+            // keyword가 비어있으면 빈 결과 반환
+            if (keyword == null || keyword.trim().isEmpty()) {
+                log.debug("검색 키워드가 비어있어 빈 결과 반환");
+                return ResponseEntity.ok(ApiEnvelope.success(PageResponse.empty()));
+            }
+            
             PageResponse<UserSearchResponse> users = searchService.searchUsers(keyword, page, size, null);
             return ResponseEntity.ok(ApiEnvelope.success(users));
         } catch (Exception e) {
-            throw e;
+            log.warn("사용자 검색 실패 - 빈 결과 반환: {}", e.getMessage());
+            return ResponseEntity.ok(ApiEnvelope.success(PageResponse.empty()));
         }
     }
 
@@ -55,18 +67,25 @@ public class SearchController {
     })
     @GetMapping("/posts")
     public ResponseEntity<ApiEnvelope<PageResponse<PostSearchResponse>>> searchPosts(
-            @Parameter(description = "검색 키워드", example = "프로젝트")
             @RequestParam(required = false) String keyword,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") Integer page,
-            @Parameter(description = "페이지 크기", example = "20")
             @RequestParam(defaultValue = "20") Integer size) {
         
+        // WHY: dev 환경에서 검색 파라미터 검증과 안전한 처리
+        log.debug("게시글 검색 요청 - keyword: {}, page: {}, size: {}", keyword, page, size);
+        
         try {
+            // keyword가 비어있으면 빈 결과 반환
+            if (keyword == null || keyword.trim().isEmpty()) {
+                log.debug("검색 키워드가 비어있어 빈 결과 반환");
+                return ResponseEntity.ok(ApiEnvelope.success(PageResponse.empty()));
+            }
+            
             PageResponse<PostSearchResponse> posts = searchService.searchPosts(keyword, page, size, null);
             return ResponseEntity.ok(ApiEnvelope.success(posts));
         } catch (Exception e) {
-            throw e;
+            log.warn("게시글 검색 실패 - 빈 결과 반환: {}", e.getMessage());
+            return ResponseEntity.ok(ApiEnvelope.success(PageResponse.empty()));
         }
     }
 }

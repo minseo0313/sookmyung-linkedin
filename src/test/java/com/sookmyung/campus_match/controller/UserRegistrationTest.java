@@ -14,6 +14,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.sookmyung.campus_match.service.auth.AuthService;
 import com.sookmyung.campus_match.controller.auth.AuthController;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.context.annotation.Import;
+import com.sookmyung.campus_match.config.TestConfig;
 
 import java.time.LocalDate;
 
@@ -25,6 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
+@Import(TestConfig.class)
 public class UserRegistrationTest {
 
     @Autowired

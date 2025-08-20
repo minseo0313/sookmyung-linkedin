@@ -9,6 +9,8 @@ import com.sookmyung.campus_match.domain.common.enums.CreatedFrom;
 import com.sookmyung.campus_match.domain.common.enums.AssignmentStatus;
 import com.sookmyung.campus_match.dto.team.TeamResponse;
 import com.sookmyung.campus_match.dto.team.TeamAcceptRequest;
+import com.sookmyung.campus_match.dto.team.TeamUpdateRequest;
+import com.sookmyung.campus_match.dto.team.TeamMemberResponse;
 import com.sookmyung.campus_match.dto.schedule.TeamScheduleRequest;
 import com.sookmyung.campus_match.dto.schedule.TeamScheduleResponse;
 import com.sookmyung.campus_match.dto.schedule.ScheduleAssignmentRequest;
@@ -75,6 +77,50 @@ public class TeamService {
     }
 
     /**
+     * 팀 수정
+     */
+    @Transactional
+    public TeamResponse updateTeam(Long teamId, TeamUpdateRequest request, String username) {
+        User user = userRepository.findById(Long.valueOf(username))
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ApiException(ErrorCode.TEAM_NOT_FOUND, "팀을 찾을 수 없습니다."));
+
+        // 팀장만 팀을 수정할 수 있음
+        if (!team.isLeader(user)) {
+            throw new ApiException(ErrorCode.TEAM_ACCESS_DENIED, "팀장만 팀을 수정할 수 있습니다.");
+        }
+
+        team.setTeamName(request.getName());
+        team.setDescription(request.getDescription());
+        team.setMaxMembers(request.getMaxMembers());
+
+        Team savedTeam = teamRepository.save(team);
+        return TeamResponse.from(savedTeam);
+    }
+
+    /**
+     * 팀 삭제
+     */
+    @Transactional
+    public void deleteTeam(Long teamId, String username) {
+        User user = userRepository.findById(Long.valueOf(username))
+                .orElseThrow(() -> new ApiException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ApiException(ErrorCode.TEAM_NOT_FOUND, "팀을 찾을 수 없습니다."));
+
+        // 팀장만 팀을 삭제할 수 있음
+        if (!team.isLeader(user)) {
+            throw new ApiException(ErrorCode.TEAM_ACCESS_DENIED, "팀장만 팀을 삭제할 수 있습니다.");
+        }
+
+        teamRepository.delete(team);
+        log.info("팀 {} 삭제됨", teamId);
+    }
+
+    /**
      * 팀 조회
      */
     public TeamResponse getTeam(Long teamId) {
@@ -102,6 +148,19 @@ public class TeamService {
         List<Team> teams = teamRepository.findByMembers_User_Id(user.getId());
         return teams.stream()
                 .map(TeamResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 팀 멤버 목록 조회
+     */
+    public List<TeamMemberResponse> getTeamMembers(Long teamId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ApiException(ErrorCode.TEAM_NOT_FOUND, "팀을 찾을 수 없습니다."));
+        
+        List<TeamMember> members = teamMemberRepository.findByTeam(team);
+        return members.stream()
+                .map(TeamMemberResponse::from)
                 .collect(Collectors.toList());
     }
 

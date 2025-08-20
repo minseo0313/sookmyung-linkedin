@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +18,12 @@ import java.util.Set;
  */
 @Component
 public class PageUtils {
+
+    private final Environment environment;
+
+    public PageUtils(Environment environment) {
+        this.environment = environment;
+    }
 
     // 허용된 정렬 필드 화이트리스트 (공통)
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
@@ -147,8 +154,17 @@ public class PageUtils {
         }
         
         String trimmedKeyword = keyword.trim();
-        if (trimmedKeyword.length() < 2) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search keyword must be at least 2 characters long");
+        
+        // WHY: dev 환경에서 키워드 검증 완화 (1글자도 허용)
+        boolean isDevProfile = environment.acceptsProfiles("dev");
+        if (isDevProfile) {
+            if (trimmedKeyword.length() < 1) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search keyword cannot be empty");
+            }
+        } else {
+            if (trimmedKeyword.length() < 2) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search keyword must be at least 2 characters long");
+            }
         }
         
         // 공백이나 특수문자만으로 구성된 경우 검증 (한글 포함)

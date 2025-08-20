@@ -99,4 +99,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     
     @Query("SELECT COUNT(p) FROM Post p WHERE p.isClosed = false")
     long countByIsClosedFalse();
+    
+    /**
+     * 카테고리별 삭제되지 않은 게시글 조회
+     * WHY: dev 환경에서 카테고리별 게시글 조회 기능 제공
+     */
+    @Query("SELECT p FROM Post p WHERE p.category = :category AND p.isDeleted = false")
+    Page<Post> findByCategoryAndIsDeletedFalse(@Param("category") PostCategory category, Pageable pageable);
 }

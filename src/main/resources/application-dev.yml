@@ -2,10 +2,23 @@
 spring:
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
 
 # 서버 포트 설정
 server:
   port: 8080
+  error:
+    whitelabel:
+      enabled: false
+  # WHY: dev 환경에서 한글 URL 인코딩 문제 해결
+  tomcat:
+    uri-encoding: UTF-8
+    relaxed-query-chars: "|,{,},[,],\\"
+    relaxed-path-chars: "|,{,},[,],\\"
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/campus?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useSSL=false
     username: campus

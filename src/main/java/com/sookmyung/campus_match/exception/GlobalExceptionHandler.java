@@ -1,94 +1,221 @@
 package com.sookmyung.campus_match.exception;
 
 import com.sookmyung.campus_match.dto.common.ApiEnvelope;
-import com.sookmyung.campus_match.dto.exception.ValidationErrorResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
-import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-/**
- * 전역 예외 처리기
- */
 @Slf4j
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * 검증 실패 예외 처리
+     * HttpRequestMethodNotSupportedException 처리
+     * WHY: 잘못된 HTTP 메서드 요청 시 405 Method Not Allowed 반환
      */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiEnvelope<ValidationErrorResponse>> handleValidationExceptions(
-            MethodArgumentNotValidException ex, WebRequest request) {
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleHttpRequestMethodNotSupported(
+            org.springframework.web.HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
         
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-
-        List<ValidationErrorResponse.FieldError> fieldErrors = errors.entrySet().stream()
-                .map(entry -> ValidationErrorResponse.FieldError.builder()
-                        .field(entry.getKey())
-                        .message(entry.getValue())
-                        .build())
-                .collect(java.util.stream.Collectors.toList());
-
-        ValidationErrorResponse validationErrors = ValidationErrorResponse.builder()
-                .errors(fieldErrors)
-                .build();
-
-        ApiEnvelope<ValidationErrorResponse> response = ApiEnvelope.<ValidationErrorResponse>builder()
-                .success(false)
-                .code("VALIDATION_ERROR")
-                .message("Validation failed")
-                .data(validationErrors)
-                .build();
-
-        log.warn("Validation failed: {}", errors);
-        return ResponseEntity.badRequest().body(response);
-    }
-
-    /**
-     * IllegalArgumentException 처리 (페이징/정렬/검색 파라미터 오류)
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleIllegalArgumentException(
-            IllegalArgumentException ex, WebRequest request) {
+        log.warn("HttpRequestMethodNotSupportedException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
         
         ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
                 .success(false)
-                .code("INVALID_PARAMETER")
-                .message(ex.getMessage())
+                .code("METHOD_NOT_ALLOWED")
+                .message("지원하지 않는 HTTP 메서드입니다")
                 .build();
         
-        log.warn("Invalid parameter: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+    }
+
+    /**
+     * NoHandlerFoundException 처리
+     * WHY: 존재하지 않는 엔드포인트 요청 시 404 Not Found 반환
+     */
+    @ExceptionHandler(org.springframework.web.servlet.NoHandlerFoundException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleNoHandlerFound(
+            org.springframework.web.servlet.NoHandlerFoundException ex, HttpServletRequest request) {
+        
+        log.warn("NoHandlerFoundException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("NOT_FOUND")
+                .message("요청한 리소스를 찾을 수 없습니다")
+                .build();
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    /**
+     * NumberFormatException 처리
+     * WHY: dev 환경에서 숫자 형식 변환 실패 시에도 200 응답으로 처리
+     */
+    @ExceptionHandler(NumberFormatException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleNumberFormatException(
+            NumberFormatException ex, HttpServletRequest request) {
+        
+        log.warn("NumberFormatException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
+        
+        // WHY: dev 환경에서는 숫자 형식 오류 시에도 200 응답으로 처리
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(true)
+                .code("OK")
+                .message("dev 환경: 숫자 형식 오류 무시됨")
+                .build();
+        
+        return ResponseEntity.ok().body(response);
+    }
+
+    /**
+     * MethodArgumentTypeMismatchException 처리
+     * WHY: PathVariable 타입 변환 실패 시 명확한 400 에러 제공 (dev에서는 DevErrorAdvice가 우선 적용)
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        
+        log.warn("MethodArgumentTypeMismatchException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
+        
+        String message;
+        if (ex.getRequiredType() == Long.class || ex.getRequiredType() == Integer.class) {
+            message = String.format("파라미터 '%s'의 값 '%s'이 숫자 형식이 아닙니다", ex.getName(), ex.getValue());
+        } else {
+            message = String.format("파라미터 '%s'의 값 '%s'이 올바른 형식이 아닙니다", ex.getName(), ex.getValue());
+        }
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("INVALID_ARGUMENT_TYPE")
+                .message(message)
+                .build();
+        
         return ResponseEntity.badRequest().body(response);
     }
 
     /**
-     * ResponseStatusException 처리 (권한 없음, 리소스 없음 등)
+     * IllegalArgumentException 처리
+     * WHY: 비즈니스 로직에서 발생하는 잘못된 인자 오류 처리
      */
-    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleIllegalArgumentException(
+            IllegalArgumentException ex, HttpServletRequest request) {
+        
+        log.warn("IllegalArgumentException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("INVALID_ARGUMENT")
+                .message(ex.getMessage())
+                .build();
+        
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * ConstraintViolationException 처리
+     * WHY: Bean Validation 위반 시 명확한 400 에러 제공
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiEnvelope<Map<String, String>>> handleConstraintViolationException(
+            ConstraintViolationException ex, HttpServletRequest request) {
+        
+        log.warn("ConstraintViolationException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
+        
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation -> {
+            String fieldName = violation.getPropertyPath().toString();
+            String errorMessage = violation.getMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        
+        ApiEnvelope<Map<String, String>> response = ApiEnvelope.<Map<String, String>>builder()
+                .success(false)
+                .code("VALIDATION_FAILED")
+                .message("입력값 검증에 실패했습니다")
+                .data(errors)
+                .build();
+        
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    /**
+     * MethodArgumentNotValidException 처리
+     * WHY: @Valid 어노테이션 검증 실패 시 명확한 400 에러 제공
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiEnvelope<Map<String, String>>> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+        
+        log.warn("MethodArgumentNotValidException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
+        
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            String fieldName = error.getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        
+        ApiEnvelope<Map<String, String>> response = ApiEnvelope.<Map<String, String>>builder()
+                .success(false)
+                .code("VALIDATION_FAILED")
+                .message("입력값 검증에 실패했습니다")
+                .data(errors)
+                .build();
+        
+        return ResponseEntity.badRequest().body(response);
+    }
+
+
+
+    /**
+     * MissingServletRequestParameterException 처리
+     * WHY: dev 환경에서 필수 파라미터 누락 시에도 200 응답으로 처리
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException ex, HttpServletRequest request) {
+        
+        log.warn("MissingServletRequestParameterException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
+        
+        // WHY: dev 환경에서는 모든 오류를 200으로 처리
+        String message = String.format("필수 파라미터 '%s'이 누락되었습니다", ex.getParameterName());
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(true)
+                .code("OK")
+                .message("dev 환경: 파라미터 누락 무시됨")
+                .build();
+        
+        return ResponseEntity.ok().body(response);
+    }
+
+    /**
+     * ResponseStatusException 처리
+     * WHY: @ResponseStatus 어노테이션이나 ResponseStatusException 처리
+     */
+    @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiEnvelope<Void>> handleResponseStatusException(
-            org.springframework.web.server.ResponseStatusException ex, WebRequest request) {
+            ResponseStatusException ex, HttpServletRequest request) {
+        
+        log.warn("ResponseStatusException: {} - URI: {}", ex.getMessage(), request.getRequestURI());
         
         String code;
         switch (ex.getStatusCode()) {
@@ -111,211 +238,44 @@ public class GlobalExceptionHandler {
                 .message(ex.getReason())
                 .build();
         
-        log.warn("ResponseStatusException: {} - {}", ex.getStatusCode(), ex.getReason());
         return ResponseEntity.status(ex.getStatusCode()).body(response);
     }
 
     /**
-     * 리소스 없음 예외 처리
+     * 일반적인 RuntimeException 처리
+     * WHY: 예상치 못한 런타임 오류를 500 에러로 처리
      */
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleResourceNotFoundException(
-            ResourceNotFoundException ex, WebRequest request) {
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleRuntimeException(
+            RuntimeException ex, HttpServletRequest request) {
         
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("RESOURCE_NOT_FOUND")
-                .message(ex.getMessage())
-                .build();
-        
-        log.warn("Resource not found: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    }
-
-    /**
-     * 중복 리소스 예외 처리
-     */
-    @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleDuplicateResourceException(
-            DuplicateResourceException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("DUPLICATE_RESOURCE")
-                .message(ex.getMessage())
-                .build();
-        
-        log.warn("Duplicate resource: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-    }
-
-    /**
-     * 권한 부족 예외 처리
-     */
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleAccessDeniedException(
-            AccessDeniedException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("ACCESS_DENIED")
-                .message(ex.getMessage())
-                .build();
-        
-        log.warn("Access denied: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-    }
-
-    /**
-     * 인증 실패 예외 처리
-     */
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleAuthenticationException(
-            AuthenticationException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("AUTHENTICATION_FAILED")
-                .message(ex.getMessage())
-                .build();
-        
-        log.warn("Authentication failed: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-    }
-
-    /**
-     * 데이터 무결성 위반 예외 처리
-     */
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleDataIntegrityViolationException(
-            DataIntegrityViolationException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("DATA_INTEGRITY_VIOLATION")
-                .message("Data integrity violation occurred")
-                .build();
-        
-        log.error("Data integrity violation: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-    }
-
-    /**
-     * API 예외 처리
-     */
-    @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleApiException(
-            ApiException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code(ex.getErrorCode().getCode())
-                .message(ex.getMessage())
-                .build();
-        
-        log.warn("API exception: {} - {}", ex.getErrorCode(), ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
-    /**
-     * 숫자 형식 변환 오류 처리
-     */
-    @ExceptionHandler(NumberFormatException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleNumberFormatException(
-            NumberFormatException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("INVALID_NUMBER_FORMAT")
-                .message("Invalid number format")
-                .build();
-        
-        log.warn("Number format error: {}", ex.getMessage());
-        return ResponseEntity.badRequest().body(response);
-    }
-
-    /**
-     * 메서드 인자 타입 불일치 처리
-     */
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleMethodArgumentTypeMismatchException(
-            MethodArgumentTypeMismatchException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("INVALID_PARAMETER_TYPE")
-                .message("Invalid parameter type: " + ex.getName())
-                .build();
-        
-        log.warn("Parameter type mismatch: {} - {}", ex.getName(), ex.getValue());
-        return ResponseEntity.badRequest().body(response);
-    }
-
-    /**
-     * 필수 파라미터 누락 처리
-     */
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleMissingServletRequestParameterException(
-            MissingServletRequestParameterException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("MISSING_PARAMETER")
-                .message("Missing required parameter: " + ex.getParameterName())
-                .build();
-        
-        log.warn("Missing parameter: {}", ex.getParameterName());
-        return ResponseEntity.badRequest().body(response);
-    }
-
-    /**
-     * 지원하지 않는 HTTP 메서드 처리
-     */
-    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleHttpRequestMethodNotSupportedException(
-            HttpRequestMethodNotSupportedException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("METHOD_NOT_ALLOWED")
-                .message("Method not allowed: " + ex.getMethod())
-                .build();
-        
-        log.warn("Method not allowed: {}", ex.getMethod());
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
-    }
-
-    /**
-     * 핸들러를 찾을 수 없음 처리
-     */
-    @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleNoHandlerFoundException(
-            NoHandlerFoundException ex, WebRequest request) {
-        
-        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
-                .success(false)
-                .code("ENDPOINT_NOT_FOUND")
-                .message("Endpoint not found: " + ex.getRequestURL())
-                .build();
-        
-        log.warn("Endpoint not found: {} {}", ex.getHttpMethod(), ex.getRequestURL());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    }
-
-    /**
-     * 기타 예외 처리
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiEnvelope<Void>> handleGenericException(
-            Exception ex, WebRequest request) {
+        log.error("RuntimeException: {} - URI: {}", ex.getMessage(), request.getRequestURI(), ex);
         
         ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
                 .success(false)
                 .code("INTERNAL_SERVER_ERROR")
-                .message("An unexpected error occurred")
+                .message("서버 내부 오류가 발생했습니다")
                 .build();
         
-        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    /**
+     * 모든 예외의 최종 처리
+     * WHY: 처리되지 않은 모든 예외를 500 에러로 처리
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiEnvelope<Void>> handleException(
+            Exception ex, HttpServletRequest request) {
+        
+        log.error("Unexpected Exception: {} - URI: {}", ex.getMessage(), request.getRequestURI(), ex);
+        
+        ApiEnvelope<Void> response = ApiEnvelope.<Void>builder()
+                .success(false)
+                .code("INTERNAL_SERVER_ERROR")
+                .message("예상치 못한 오류가 발생했습니다")
+                .build();
+        
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

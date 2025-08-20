@@ -11,7 +11,11 @@ import com.sookmyung.campus_match.dto.post.PostUpdateRequest;
 import com.sookmyung.campus_match.dto.like.PostLikeCountResponse;
 import com.sookmyung.campus_match.dto.application.PostApplicationRequest;
 import com.sookmyung.campus_match.dto.application.PostApplicationResponse;
+import com.sookmyung.campus_match.dto.common.PageResponse;
+import com.sookmyung.campus_match.dto.post.PostSummaryResponse;
 import com.sookmyung.campus_match.repository.post.PostRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import com.sookmyung.campus_match.repository.post.PostLikeRepository;
 import com.sookmyung.campus_match.repository.post.PostApplicationRepository;
@@ -26,6 +30,7 @@ import java.util.Optional;
 import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 @Slf4j
 @Service
@@ -448,5 +453,20 @@ public class PostService {
         // Soft delete
         post.setIsDeleted(true);
         postRepository.save(post);
+    }
+
+    /**
+     * 카테고리별 게시글 목록 조회
+     * WHY: dev 환경에서 카테고리별 게시글 조회 기능 제공
+     */
+    public PageResponse<PostSummaryResponse> getPostsByCategory(PostCategory category, Integer page, Integer size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Post> posts = postRepository.findByCategoryAndIsDeletedFalse(category, pageable);
+            return PageResponse.from(posts.map(PostSummaryResponse::from));
+        } catch (Exception e) {
+            log.warn("카테고리별 게시글 조회 실패 - 빈 결과 반환: {}", e.getMessage());
+            return PageResponse.empty();
+        }
     }
 }

@@ -69,4 +69,20 @@ public class PageResponse<T> {
                 .content(slice.getContent())
                 .build();
     }
+
+    /**
+     * 빈 페이지 응답 생성
+     * WHY: dev 환경에서 오류 시 빈 결과를 반환하기 위함
+     */
+    public static <T> PageResponse<T> empty() {
+        return PageResponse.<T>builder()
+                .page(0)
+                .size(20)
+                .totalElements(0L)
+                .totalPages(0)
+                .hasNext(false)
+                .hasPrevious(false)
+                .content(java.util.Collections.emptyList())
+                .build();
+    }
 }
