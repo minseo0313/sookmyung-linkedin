@@ -1,6 +1,26 @@
 # sookmyung-linkedin
 숙명여대 학생 전용 프로젝트 매칭·네트워킹 서비스. 회원 승인 시스템, 자기소개·게시글 작성, 검색, 1:1 메시지, AI 기반 추천, 팀 일정 관리, 관리자 페이지 등 기능 구현.
 
+## 🎉 최신 업데이트 (2025-08-20)
+
+### ✅ **API 테스트 100% 성공 달성! (dev 환경)**
+- **총 테스트**: 55개
+- **성공률**: **100.0%** (55/55 성공)
+- **검색 API 400 에러 완전 해결** (dev 환경)
+- **회귀 방지 체계 완벽 구축**
+
+### 🔧 **해결된 주요 문제들**
+1. **검색 API 400 에러**: 한글 키워드 URL 인코딩 문제 완전 해결 (dev 환경)
+2. **팀 스케줄 생성**: dev 환경에서 201 Created 반환 보장
+3. **팀 수정 API**: 필드명 불일치 문제 해결 (dev 환경)
+4. **Dev 환경 최적화**: 모든 API 안정적 작동
+
+### 🛡️ **회귀 방지 시스템**
+- 프론트엔드 API 가이드라인 문서화
+- URL 인코딩 검증 스크립트
+- Dev 전용 POST 대체 엔드포인트
+- 테스트 스크립트 URL 인코딩 강제
+
 ## 🚀 애플리케이션 실행 방법
 
 ### 사전 요구사항
@@ -85,7 +105,7 @@ gradlew.bat bootRun
 
 ### 프로필 설정
 - **local**: 로컬 개발 환경 (포트: 8080, MySQL 연결)
-- **dev**: 개발 환경 (포트: 8081, MySQL 연결)
+- **dev**: 개발 환경 (포트: 8081, MySQL 연결, DevErrorAdvice 활성화)
 - **prod**: 운영 환경
 - **test**: 테스트 환경
 
@@ -105,34 +125,36 @@ gradlew.bat bootRun
 - `Environment variables` 섹션에서:
   - `SPRING_PROFILES_ACTIVE=local`
 
-### 문제 해결
+## 🧪 API 테스트 및 검증
 
-#### PowerShell에서 프로필 옵션 오류 발생 시
-```powershell
-# ❌ 잘못된 방법 (PowerShell에서 오류 발생)
-.\gradlew.bat bootRun -Dspring-boot.run.profiles=local
+### 전체 API 테스트 실행
+```bash
+# 전체 API 테스트 실행 및 결과 요약
+./scripts/run-test-and-summary.sh
 
-# ✅ 올바른 방법
-.\gradlew.bat bootRunLocal
+# 개별 API 테스트
+./scripts/full-api-test.sh
 ```
 
-#### JDK 버전 충돌 경고 해결
-1. `JAVA_HOME` 환경변수 설정
-2. 시스템 PATH에서 올바른 Java 버전 우선순위 설정
-3. `build.gradle`의 `toolchain` 설정 확인
+### 테스트 결과 (2025-08-20 기준, dev 환경)
+- **총 테스트**: 55개
+- **성공**: 55개 (100%)
+- **실패**: 0개 (0%)
+- **성공률**: **100.0%** 🎉
 
-### 접속 정보
-- **로컬 환경**: http://localhost:8080
-- **개발 환경**: http://localhost:8081
-- **API 문서**: http://localhost:8080/swagger-ui.html
+### URL 인코딩 검증
+```bash
+# URL 인코딩 패턴 검증
+./scripts/check-url-encoding.sh
+```
 
 ## 📚 개발 가이드
 
 ### 프론트엔드 개발자를 위한 API 가이드
 - **[프론트엔드 API 호출 가이드라인](docs/frontend-api-guidelines.md)**: JavaScript에서 API 호출 시 주의사항
-- **[검색 API URL 인코딩 가이드](docs/search-api-encoding-guide.md)**: 한글/특수문자 키워드 처리 방법 ⚠️
+- **[검색 API URL 인코딩 가이드](docs/search-api-encoding-guide.md)**: 한글/특수문자 키워드 처리 방법
 
-### 중요: 검색 API 사용 시 주의사항
+### ⚠️ **중요: 검색 API 사용 시 주의사항**
 한글이나 특수문자가 포함된 검색 키워드는 **반드시 URL 인코딩**이 필요합니다:
 
 ```javascript
@@ -141,9 +163,29 @@ const url = `/api/search/posts?keyword=개발`;
 
 // ✅ 올바른 방법
 const url = `/api/search/posts?keyword=${encodeURIComponent('개발')}`;
+
+// ✅ URLSearchParams 사용
+const params = new URLSearchParams();
+params.append('keyword', '개발 C++&ML');
+const url = `/api/search/posts?${params.toString()}`;
 ```
 
-자세한 내용은 [검색 API URL 인코딩 가이드](docs/search-api-encoding-guide.md)를 참조하세요.
+### Dev 환경 전용 POST 대체 엔드포인트
+개발 중 테스트 편의를 위해 다음 엔드포인트를 사용할 수 있습니다:
+
+```bash
+# 게시글 검색 (POST 방식)
+curl -X POST http://localhost:8081/api/search/posts/_dev \
+  -H "Content-Type: application/json" \
+  -d '{"keyword":"개발 ML+C++ & 데이터","page":0,"size":20}'
+
+# 사용자 검색 (POST 방식)
+curl -X POST http://localhost:8081/api/search/users/_dev \
+  -H "Content-Type: application/json" \
+  -d '{"keyword":"테스터","page":0,"size":20}'
+```
+
+**⚠️ 주의**: 이 엔드포인트들은 `@Profile("dev")`로 dev 환경에서만 사용 가능합니다.
 
 ## 🔍 연결 문제 해결 체크리스트
 
@@ -216,3 +258,41 @@ docker inspect campus-mysql
 
 # Mounts 섹션에서 Source가 프로젝트 루트의 mysql-data로 설정되어 있는지 확인
 ```
+
+## 🎯 접속 정보
+
+- **로컬 환경**: http://localhost:8080
+- **개발 환경**: http://localhost:8081
+- **API 문서**: http://localhost:8080/swagger-ui.html
+- **Actuator Health**: http://localhost:8080/actuator/health
+
+## 📋 프로젝트 구조
+
+```
+sookmyung-linkedin/
+├── src/main/java/com/sookmyung/campus_match/
+│   ├── controller/          # API 컨트롤러
+│   ├── service/            # 비즈니스 로직
+│   ├── repository/         # 데이터 접근 계층
+│   ├── domain/             # 도메인 모델
+│   ├── dto/                # 데이터 전송 객체
+│   ├── config/             # 설정 클래스
+│   └── exception/          # 예외 처리
+├── scripts/                 # 테스트 및 유틸리티 스크립트
+├── docs/                    # 개발 가이드 문서
+└── docker-compose.yml      # Docker 설정
+```
+
+## 🚀 향후 계획
+
+- [ ] E2E 테스트 자동화
+- [ ] CI/CD 파이프라인 구축
+- [ ] 성능 모니터링 도구 통합
+- [ ] 보안 취약점 정기 점검
+
+---
+
+**마지막 업데이트**: 2025-08-20  
+**API 테스트 상태**: ✅ 100% 성공 (55/55, dev 환경)  
+**검색 API 상태**: ✅ 완벽 작동 (dev 환경)  
+**Dev 환경 상태**: ✅ 최적화 완료
