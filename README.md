@@ -389,23 +389,5 @@ springdoc:
 - [검색 API 인코딩 가이드](docs/search-api-encoding-guide.md)
 - [API 요청 형식 가이드](docs/request-format.md)
 
-## 🤝 기여하기
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
-
-## 📞 연락처
-
-- **프로젝트 링크**: [https://github.com/your-username/sookmyung-linkedin](https://github.com/your-username/sookmyung-linkedin)
-- **이메일**: support@campus-match.com
-
----
 
 **현재 `dev` 환경이 실제 개발에 사용되고 있으며, 모든 스텁 API와 Mock 인증이 활성화되어 있습니다!** 🚀
